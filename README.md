@@ -81,7 +81,7 @@ FleetDM                    Kandji                     Slack
 
 ## The script
 
-There is one active script: `drift_check.py`. A real-time webhook handler (`fleet_remediation.py`) also exists in the `archive/` folder. It is complete and production-ready but not currently deployed — see `archive/README.md` for context on when to revisit it.
+There is one active script: `drift_check.py`. A real-time webhook handler (`fleet_remediation.py`) also exists in the `archive/` folder. It is complete and but not currently deployed — see `archive/README.md` for context on when to revisit it.
 
 ### `drift_check.py` — Scheduled compliance sweep
 

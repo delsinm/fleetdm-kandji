@@ -41,7 +41,7 @@ The watched policy list is maintained in `remediation/policies.yml`.
 | Criteria | Description | Policy | File |
 |---|---|---|---|
 | CC4.1 | Monitors for security breaches and anomalies | Audit logging enabled | `audit-logging-enabled.yml` |
-| CC4.1 | Monitors for security breaches and anomalies | CrowdStrike running | `crowdstrike-running.yml` |
+| CC4.1 | Monitors for security breaches and anomalies | EDR software running | `edr-*-running.yml` |
 | CC4.1 | Monitors for security breaches and anomalies | NTP time synchronisation configured | `ntp-configured.yml` |
 
 ---

@@ -1,21 +1,14 @@
 # ISO 27001:2022 Compliance Matrix
 
-This document maps each FleetDM endpoint policy to its corresponding ISO
-27001:2022 Annex A controls. ISO 27001 is a management system standard --
-certification requires both an operational ISMS (clauses 4-10) and
-implementation of applicable Annex A controls.
+This document maps each FleetDM endpoint policy to its corresponding ISO 27001:2022 Annex A controls. ISO 27001 is a management system standard - certification requires both an operational ISMS (clauses 4-10) and implementation of applicable Annex A controls.
 
-Endpoint policies address Theme 4 (Technological Controls) and a small
-subset of Theme 1 (Organisational Controls). Themes 2 (People) and 3
-(Physical) require separate organisational and physical controls not
-addressable by endpoint policy.
+Endpoint policies address Theme 4 (Technological Controls) and a small subset of Theme 1 (Organisational Controls). Themes 2 (People) and 3 (Physical) require separate organisational and physical controls not addressable by endpoint policy.
 
-Each policy has a corresponding YAML definition under `fleet/policies/`
-containing the full osquery query, resolution steps, and detailed rationale.
+Each policy has a corresponding YAML definition under `fleet/policies/` containing the full osquery query, resolution steps, and detailed rationale.
 
 > **EDR note:** Entries referencing CrowdStrike also apply to Cisco Secure Endpoint
 > and SentinelOne. Substitute the appropriate policy file for your deployed EDR:
-> `crowdstrike-*.yml` → `cisco-secure-endpoint-*.yml` or `sentinelone-*.yml`
+> `edr-crowdstrike-*.yml` → `edr-cisco-secure-endpoint-*.yml` or `edr-sentinelone-*.yml`
 
 ---
 
@@ -47,9 +40,7 @@ containing the full osquery query, resolution steps, and detailed rationale.
 
 ### A.8.1 — User Endpoint Devices
 
-Requires that information processed, stored, or transmitted by user endpoint
-devices is protected. Policies implementing rules for managing user endpoint
-devices must be established and applied.
+Requires that information processed, stored, or transmitted by user endpoint devices is protected. Policies implementing rules for managing user endpoint devices must be established and applied.
 
 | Policy | File | Contribution |
 |---|---|---|
@@ -61,8 +52,7 @@ devices must be established and applied.
 
 ### A.8.2 — Privileged Access Rights
 
-Requires that the allocation and use of privileged access rights be
-restricted, controlled, managed, and reviewed.
+Requires that the allocation and use of privileged access rights be restricted, controlled, managed, and reviewed.
 
 | Policy | File | Contribution |
 |---|---|---|
@@ -71,8 +61,7 @@ restricted, controlled, managed, and reviewed.
 
 ### A.8.3 — Information Access Restriction
 
-Requires that access to information and application system functions be
-restricted in accordance with the access control policy.
+Requires that access to information and application system functions be restricted in accordance with the access control policy.
 
 | Policy | File | Contribution |
 |---|---|---|
@@ -101,27 +90,24 @@ appropriate user awareness.
 
 | Policy | File | Contribution |
 |---|---|---|
-| CrowdStrike running | `crowdstrike-running.yml` | Primary endpoint malware detection and prevention |
-| CrowdStrike version current | `crowdstrike-version.yml` | Ensures malware protection is current |
+| EDR software running | `edr-*-running.yml` | Primary endpoint malware detection and prevention |
+| EDR software version current | `edr-*-version.yml` | Ensures malware protection is current |
 | Gatekeeper enabled | `gatekeeper-enabled.yml` | Prevents execution of unsigned/untrusted software |
 | System Integrity Protection enabled | `sip-enabled.yml` | Prevents system-level malware persistence |
 
 ### A.8.8 — Management of Technical Vulnerabilities
 
-Requires that information about technical vulnerabilities of systems be
-obtained, the organisation's exposure evaluated, and appropriate measures taken.
+Requires that information about technical vulnerabilities of systems be obtained, the organisation's exposure evaluated, and appropriate measures taken.
 
 | Policy | File | Contribution |
 |---|---|---|
 | OS up to date | `os-up-to-date.yml` | Primary patch compliance outcome check |
 | Automatic updates enabled | `auto-updates-enabled.yml` | Ensures device checks for available patches |
-| CrowdStrike version current | `crowdstrike-version.yml` | Remediates vulnerability in agent software itself |
+| EDR software version current | `edr-*-version.yml` | Remediates vulnerability in agent software itself |
 
 ### A.8.9 — Configuration Management
 
-Requires that configurations, including security configurations, of hardware,
-software, services, and networks be established, documented, implemented,
-monitored, and reviewed.
+Requires that configurations, including security configurations, of hardware, software, services, and networks be established, documented, implemented, monitored, and reviewed.
 
 | Policy | File | Contribution |
 |---|---|---|
@@ -138,8 +124,7 @@ monitored, and reviewed.
 
 ### A.8.13 — Information Backup
 
-Requires that backup copies of information, software, and system images be
-taken and tested regularly in accordance with an agreed backup policy.
+Requires that backup copies of information, software, and system images be taken and tested regularly in accordance with an agreed backup policy.
 
 | Policy | File | Contribution |
 |---|---|---|
@@ -151,8 +136,7 @@ taken and tested regularly in accordance with an agreed backup policy.
 
 ### A.8.15 — Logging
 
-Requires that logs recording user activities, exceptions, faults, and
-information security events be produced, stored, protected, and analysed.
+Requires that logs recording user activities, exceptions, faults, and information security events be produced, stored, protected, and analysed.
 
 | Policy | File | Contribution |
 |---|---|---|
@@ -161,14 +145,12 @@ information security events be produced, stored, protected, and analysed.
 
 ### A.8.16 — Monitoring Activities
 
-Requires that networks, systems, and applications be monitored for anomalous
-behaviour and appropriate actions taken to evaluate potential information
-security incidents.
+Requires that networks, systems, and applications be monitored for anomalous behaviour and appropriate actions taken to evaluate potential information security incidents.
 
 | Policy | File | Contribution |
 |---|---|---|
-| CrowdStrike running | `crowdstrike-running.yml` | Continuous endpoint behavioural monitoring |
-| CrowdStrike version current | `crowdstrike-version.yml` | Ensures monitoring capability is effective |
+| EDR software running | `edr-*-running.yml` | Continuous endpoint behavioural monitoring |
+| EDR software version current | `edr-*-version.yml` | Ensures monitoring capability is effective |
 | Audit logging enabled | `audit-logging-enabled.yml` | Provides endpoint event data for monitoring |
 
 ### A.8.17 — Clock Synchronisation
@@ -187,8 +169,7 @@ and facilitate incident investigation.
 
 ### A.8.20 — Networks Security
 
-Requires that networks and network devices be secured, managed, and
-controlled to protect information in systems and applications.
+Requires that networks and network devices be secured, managed, and controlled to protect information in systems and applications.
 
 | Policy | File | Contribution |
 |---|---|---|
@@ -202,8 +183,7 @@ controlled to protect information in systems and applications.
 
 ### A.8.24 — Use of Cryptography
 
-Requires that rules for the effective use of cryptography, including
-cryptographic key management, be defined and implemented.
+Requires that rules for the effective use of cryptography, including cryptographic key management, be defined and implemented.
 
 | Policy | File | Contribution |
 |---|---|---|
@@ -214,8 +194,7 @@ cryptographic key management, be defined and implemented.
 
 ## Key Gaps
 
-These Annex A controls are not addressed by endpoint policies and require
-separate organisational, people, or physical controls:
+These Annex A controls are not addressed by endpoint policies and require separate organisational, people, or physical controls:
 
 | Control | Description | Coverage Approach |
 |---|---|---|
@@ -239,8 +218,7 @@ separate organisational, people, or physical controls:
 
 ## ISMS Requirements (Clauses 4-10)
 
-ISO 27001 certification also requires implementing the management system
-clauses. None of these are addressed by endpoint policies:
+ISO 27001 certification also requires implementing the management system clauses. None of these are addressed by endpoint policies:
 
 | Clause | Requirement |
 |---|---|

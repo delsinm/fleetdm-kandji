@@ -361,7 +361,7 @@ Commit the change and the Fleet sync workflow will apply it on merge.
 
 ## Compliance documentation
 
-Full framework mapping is available in the matrix files at the root of this repository. Each policy file also contains inline compliance rationale in its header comments.
+Full framework mapping is available in the matrix files in the `compliance-maps` directory. Additionally, each policy file also contains inline compliance rationale in its header comments.
 
 For audit purposes, the drift check GitHub Actions run history provides a timestamped record of every compliance sweep, including which devices were found non-compliant and whether remediation was triggered.
 

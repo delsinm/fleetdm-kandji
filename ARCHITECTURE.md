@@ -22,7 +22,7 @@ This system provides automated endpoint compliance remediation by connecting Fle
                              │
               ┌──────────────┴──────────────┐
               │                             │
-┌─────────────▼─────────-─────┐  ┌──────────▼──────────────────────┐
+┌─────────────▼─────────-─────┐  ┌──────────▼─────────────-─────────┐
 │         FleetDM             │  │          CrowdStrike             │
 │   (compliance / visibility) │  │      (EDR / threat detection)    │
 │                             │  │                                  │

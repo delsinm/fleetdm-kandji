@@ -30,7 +30,7 @@ This system provides automated endpoint compliance remediation by connecting Fle
 │  managed endpoints          │  │  streams telemetry to CS cloud   │
 │                             │  │                                  │
 │  Policies (pass/fail):      │  │  Feeds device risk signal        │
-│  - CrowdStrike running      │  │  into Okta device trust          │
+│  - EDR Software running     │  │  into Okta device trust          │
 │  - Disk encryption on       │  └──────────────────────────────────┘
 │  - Firewall enabled         │
 │  - OS up to date            │
@@ -152,7 +152,7 @@ Each watched policy maps to one or more FedRAMP controls:
 
 | Policy | Control | Family |
 |---|---|---|
-| CrowdStrike running | SI-3 (Malware Protection) | System & Information Integrity |
+| EDR software running | SI-3 (Malware Protection) | System & Information Integrity |
 | Disk encryption enabled | SC-28 (Protection at Rest) | System & Communications Protection |
 | Firewall enabled | SC-7 (Boundary Protection) | System & Communications Protection |
 | OS up to date | SI-2 (Flaw Remediation) | System & Information Integrity |
@@ -189,7 +189,7 @@ Both scripts share a common set of environment variables. Store in a secrets man
 it-infrastructure/
 ├── fleet/
 │   ├── policies/
-│   │   ├── crowdstrike-running.yml
+│   │   ├── edr-crowdstrike-running.yml
 │   │   ├── disk-encryption.yml
 │   │   ├── firewall-enabled.yml
 │   │   └── os-up-to-date.yml

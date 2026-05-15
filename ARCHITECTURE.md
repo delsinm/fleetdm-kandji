@@ -22,7 +22,7 @@ This system provides automated endpoint compliance remediation by connecting Fle
                              │
               ┌──────────────┴──────────────┐
               │                             │
-┌─────────────▼──────────────┐  ┌──────────▼──────────────────────┐
+┌─────────────▼─────────-─────┐  ┌──────────▼──────────────────────┐
 │         FleetDM             │  │          CrowdStrike             │
 │   (compliance / visibility) │  │      (EDR / threat detection)    │
 │                             │  │                                  │
@@ -208,11 +208,7 @@ it-infrastructure/
         └── drift-check.yml     ← runs drift_check.py on a schedule
 ```
 
-Kandji is managed entirely through the Kandji UI and is not represented in
-this repository. Blueprints, library items, and enrollment settings are
-configured directly in Kandji and treated as the source of truth. The
-remediation scripts interact with Kandji only to trigger blankpushes --
-they do not read or modify any Kandji configuration.
+Kandji is managed entirely through the Kandji UI and is not represented in this repository. Blueprints, library items, and enrollment settings are configured directly in Kandji and treated as the source of truth. The remediation scripts interact with Kandji only to trigger blankpushes - they do not read or modify any Kandji configuration.
 
 ---
 

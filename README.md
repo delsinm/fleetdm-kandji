@@ -199,7 +199,7 @@ Each record contains a UTC ISO 8601 timestamp and a self-describing event type:
 
 ### Configuration
 
-By default JSON logs go to stdout alongside the human-readable output. To separate them, set the `JSON_LOG_FILE` environment variable to a file path — the script will append JSON lines there while human-readable logs continue to stderr:
+By default, the console will display the JSON logs(stdout) alongside the human-readable output(stderr). To separate them, set the `JSON_LOG_FILE` environment variable to a file path — the script will append JSON lines there while human-readable logs continue to stderr:
 
 ```bash
 JSON_LOG_FILE=/var/log/drift_check_json.log python drift_check.py

@@ -163,7 +163,7 @@ The drift check produces two log streams simultaneously — one for human operat
 Standard Python logging written to stderr. Useful for local debugging, cron monitoring, and GitHub Actions run logs. Format:
 
 ```
-2024-01-15 14:00:01 INFO  Starting drift check -- watching 23 policies
+2024-01-15 14:00:01 INFO  Starting drift check -- watching 28 policies
 2024-01-15 14:00:02 INFO  Built Kandji device cache: 600 devices
 2024-01-15 14:00:03 INFO  Policy OK: Firewall enabled
 2024-01-15 14:00:04 INFO  Policy 'CrowdStrike running' -- 2 failing host(s)
@@ -178,11 +178,11 @@ Every compliance event is also emitted as a JSON Lines record — one JSON objec
 Each record contains a UTC ISO 8601 timestamp and a self-describing event type:
 
 ```json
-{"timestamp": "2024-01-15T14:00:01Z", "event": "drift_check_start", "policies_watched": 23}
+{"timestamp": "2024-01-15T14:00:01Z", "event": "drift_check_start", "policies_watched": 28}
 {"timestamp": "2024-01-15T14:00:03Z", "event": "policy_ok", "policy": "Firewall enabled"}
 {"timestamp": "2024-01-15T14:00:04Z", "event": "policy_failure", "policy": "CrowdStrike running", "hostname": "mac-042.local", "serial": "C02XL0PH", "kandji_device_id": "abc-123", "lookup_failure": null}
 {"timestamp": "2024-01-15T14:00:05Z", "event": "blankpush_sent", "hostname": "mac-042.local", "kandji_device_id": "abc-123", "action": "blankpush", "outcome": "success"}
-{"timestamp": "2024-01-15T14:00:06Z", "event": "drift_check_complete", "policies_checked": 23, "hosts_remediated": 2, "blankpush_failures": 0, "outcome": "success"}
+{"timestamp": "2024-01-15T14:00:06Z", "event": "drift_check_complete", "policies_checked": 28, "hosts_remediated": 2, "blankpush_failures": 0, "outcome": "success"}
 ```
 
 **Event types:**
@@ -226,7 +226,7 @@ it-infrastructure/
 │   └── policies.yml                 ← list of policies the drift check watches
 │
 ├── fleet/
-│   ├── policies/                    ← FleetDM policy YAML definitions (23 files)
+│   ├── policies/                    ← FleetDM policy YAML definitions
 │   ├── queries/                     ← FleetDM scheduled query definitions
 │   └── config/
 │       └── agent-options.yml        ← osquery agent configuration
@@ -293,7 +293,7 @@ npm install -g fleetctl
 # Log in to your Fleet server
 fleetctl login --address https://fleet.company.com
 
-# Apply all 23 policies
+# Apply all policies
 fleetctl apply -f fleet/policies/
 ```
 
@@ -313,7 +313,7 @@ To verify it works before waiting for the schedule, go to **Actions → Fleet Dr
 
 ### Step 4 — Verify everything is working
 
-1. **Check Fleet policies** — confirm all 23 policies appear in Fleet under Policies and are evaluating (showing pass/fail counts per device).
+1. **Check Fleet policies** — confirm all policies appear in Fleet under Policies and are evaluating (showing pass/fail counts per device).
 2. **Run the drift check manually** — trigger the GitHub Action and confirm it completes without errors. If all devices are compliant no Slack message will be sent — this is expected and correct.
 3. **Simulate a failure** — in Fleet, find a test device and check which policies it is currently failing (if any). The next drift check run should pick it up and post a Slack summary.
 4. **Check Slack** — confirm the summary appears in your configured Slack channel when drift is detected. A clean fleet produces no message.

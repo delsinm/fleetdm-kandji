@@ -1,0 +1,107 @@
+---
+# login-window-display.yml
+# FleetDM Policy: Login window displays name and password fields only
+#
+# Verifies that the macOS login window is configured to display name and
+# password input fields rather than a list of user accounts. When the login
+# window shows a list of accounts, an attacker with physical access can see
+# all local usernames without any authentication, enabling targeted credential
+# attacks against known accounts. Requiring both username and password entry
+# prevents username enumeration at the login screen.
+#
+# Compliance mapping
+# ------------------
+# FedRAMP / NIST 800-53:
+#   IA-2      Identification and Authentication -- requires users to identify
+#             themselves before authentication. Displaying usernames at the
+#             login screen exposes the identification component without
+#             requiring any credentials.
+#   IA-5      Authenticator Management -- username enumeration enables
+#             targeted attacks against authenticators. Hiding usernames
+#             increases the effort required for credential attacks.
+#   AC-2      Account Management -- displaying all local accounts at the
+#             login screen reveals account inventory to unauthenticated
+#             individuals with physical access.
+#   AC-11     Session Lock -- the login window is the re-authentication
+#             surface after a session lock. Hiding usernames strengthens
+#             the re-authentication challenge.
+#
+# HIPAA:
+#   § 164.312(d)    Person or Entity Authentication -- requires procedures
+#                   to verify that a person seeking access is who they claim
+#                   to be. Displaying usernames reduces the authentication
+#                   challenge by providing the identification component for
+#                   free to anyone with physical access.
+#   § 164.312(a)(1) Access Control -- displaying account names to
+#                   unauthenticated users weakens access controls by
+#                   assisting potential attackers in targeting accounts
+#                   that may have access to ePHI.
+#
+# SOC 2:
+#   CC6.1  Logical access controls -- login window account enumeration
+#          reduces the strength of physical access controls by revealing
+#          valid usernames to anyone who can see the screen.
+#   CC6.2  Prior to issuing system credentials -- the login window should
+#          not reveal provisioned account names to unauthenticated parties.
+#
+# Note
+# ----
+# The managed_policies query checks SHOWFULLNAME = 1, which means "show
+# the name and password fields" (not a user list). Despite the confusing
+# name, SHOWFULLNAME = 1 is the secure configuration -- it forces manual
+# username entry rather than displaying a clickable account list.
+#
+#
+# ISO 27001:2022:
+#   A.8.5   Secure Authentication -- displaying usernames at the login
+#           screen reduces the authentication challenge by providing the
+#           identification component without credentials. Hiding usernames
+#           strengthens the authentication requirement.
+#   A.8.3   Information Access Restriction -- account names are information
+#           that should not be disclosed to unauthenticated parties with
+#           physical access to the device.
+# Resolution
+# ----------
+# Deploy a Kandji configuration profile setting:
+#   com.apple.loginwindow SHOWFULLNAME = true
+# Verify with:
+#   defaults read /Library/Preferences/com.apple.loginwindow SHOWFULLNAME
+# Expected output: 1
+
+# Kandji enforcement
+# ------------------
+# Type:          Configuration profile
+# Profile:       Custom profile — deploy com.apple.loginwindow payload
+# Assignment:    All blueprints
+# Verify:        Kandji → Library → Custom Profiles → Login Window profile assigned
+#
+# Add to the same com.apple.loginwindow profile used for guest-account-disabled.yml:
+#   SHOWFULLNAME: true  (show name and password fields, not user list)
+#
+# A single profile can cover both guest-account-disabled.yml and this policy.
+# SHOWFULLNAME = true means "show the full name and password input fields"
+# (confusingly named — this is the secure configuration, not the insecure one).
+apiVersion: v1
+kind: policy
+spec:
+  name: Login window shows name and password fields (macOS)
+  description: >
+    Checks that the macOS login window requires manual username entry rather
+    than displaying a list of local accounts. Prevents username enumeration
+    by unauthenticated users with physical access. Note: SHOWFULLNAME = 1
+    is the secure configuration (shows input fields, not a user list). Satisfies
+    IA-2 (Identification and Authentication), AC-2 (Account Management),
+    HIPAA § 164.312(d) (Authentication), and SOC 2 CC6.1.
+  query: >
+    SELECT 1 FROM managed_policies
+    WHERE domain = 'com.apple.loginwindow'
+      AND name = 'SHOWFULLNAME'
+      AND value = '1';
+  resolution: >
+    Deploy a Kandji configuration profile setting com.apple.loginwindow
+    SHOWFULLNAME to true (1). This displays name and password input fields
+    at login rather than a list of user accounts. Verify with:
+    defaults read /Library/Preferences/com.apple.loginwindow SHOWFULLNAME
+    Expected output: 1.
+  platform: darwin
+  critical: false

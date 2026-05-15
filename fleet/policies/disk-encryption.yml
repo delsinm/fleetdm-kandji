@@ -1,0 +1,103 @@
+---
+# disk-encryption.yml
+# FleetDM Policy: Disk encryption enabled (FileVault)
+#
+# Verifies that FileVault full-disk encryption is enabled on the macOS startup
+# volume. This is the baseline encryption check -- it confirms encryption is
+# active on the primary disk. Pair with filevault-key-escrowed.yml to also
+# verify the recovery key is managed by Kandji, which satisfies the key
+# management dimension of SC-28.
+#
+# Together these two policies form a complete SC-28 control pair:
+#   disk-encryption.yml          -- encryption is on (presence)
+#   filevault-key-escrowed.yml   -- key is managed by IT (governance)
+#
+# Compliance mapping
+# ------------------
+# FedRAMP / NIST 800-53:
+#   SC-28     Protection of Information at Rest -- requires the organisation
+#             to protect the confidentiality and integrity of information at
+#             rest. FileVault encryption of the startup disk directly satisfies
+#             this control for endpoint devices.
+#   SC-28(1)  Cryptographic Protection -- requires cryptographic mechanisms
+#             to prevent unauthorised disclosure of information at rest.
+#             FileVault uses AES-128 or AES-256 (Apple Silicon) encryption.
+#   MP-5      Media Transport -- encrypted disks satisfy the requirement for
+#             protecting information on portable storage during transport or
+#             in the event of device loss or theft.
+#   MP-8      Media Downgrading -- encryption ensures data cannot be recovered
+#             from a decommissioned device without the recovery key.
+#
+# HIPAA:
+#   § 164.312(a)(2)(iv)  Encryption and Decryption -- addressable implementation
+#                        specification requiring a mechanism to encrypt and
+#                        decrypt ePHI. For laptops and portable devices this is
+#                        effectively required given theft/loss risk.
+#   § 164.312(e)(2)(ii)  Encryption of ePHI -- while primarily addressing
+#                        transmission, HIPAA guidance treats encryption of
+#                        portable devices as a best practice satisfying the
+#                        overall risk reduction requirement.
+#   § 164.310(d)(1)      Device and Media Controls -- requires policies for
+#                        final disposition of hardware. Encryption supports
+#                        secure decommission of devices containing ePHI.
+#
+# SOC 2:
+#   CC6.1  Logical and physical access controls -- disk encryption ensures
+#          that physical access to a device does not result in data exposure,
+#          a key requirement of this criteria.
+#   CC6.7  Restricts transmission of confidential information -- encryption
+#          at rest reduces risk of confidential data exposure in transit
+#          (e.g. shipping a device, or device theft during travel).
+#   A1.2   Availability -- encrypted disks with escrowed keys support
+#          recovery procedures and device replacement workflows.
+#
+#
+# ISO 27001:2022:
+#   A.8.24  Use of Cryptography -- requires a policy on the use of
+#           cryptographic controls for protection of information. FileVault
+#           full-disk encryption directly satisfies this for endpoint devices.
+#   A.8.1   User Endpoint Devices -- requires protection of information
+#           processed, stored, or transmitted by user endpoint devices.
+#           Encryption is a required control for portable devices.
+# Resolution
+# ----------
+# Enable FileVault via Kandji configuration profile (preferred) or manually:
+#   System Settings > Privacy & Security > FileVault > Turn On
+# Encryption will complete in the background over several hours depending
+# on disk size. Monitor progress with: fdesetup status
+# Ensure the Kandji FileVault profile has key escrow enabled so the recovery
+# key is automatically sent to Kandji on activation.
+
+# Kandji enforcement
+# ------------------
+# Type:          Configuration profile
+# Profile:       FileVault (Kandji → Library → FileVault)
+# Assignment:    All blueprints
+# Verify:        Kandji → Library → FileVault → "Enforce FileVault" enabled
+#
+# Kandji's FileVault library item enforces encryption via MDM and can
+# escrow the recovery key automatically. Enable "Escrow personal recovery
+# key" in the FileVault configuration to satisfy filevault-key-escrowed.yml.
+# FileVault encryption completes in the background after the profile is applied.
+apiVersion: v1
+kind: policy
+spec:
+  name: Disk encryption enabled (macOS)
+  description: >
+    Checks that FileVault full-disk encryption is enabled on the macOS startup
+    volume. Baseline encryption presence check -- pair with the FileVault
+    recovery key escrowed policy for complete SC-28 coverage. Satisfies SC-28
+    (Protection of Information at Rest), SC-28(1) (Cryptographic Protection),
+    HIPAA § 164.312(a)(2)(iv) (Encryption and Decryption), and SOC 2 CC6.1.
+  query: >
+    SELECT 1 FROM disk_encryption
+    WHERE encrypted = 1
+      AND name LIKE '/dev/disk%';
+  resolution: >
+    Enable FileVault via Kandji configuration profile or via System Settings >
+    Privacy & Security > FileVault > Turn On. Encryption completes in the
+    background -- monitor with: fdesetup status. Ensure the Kandji FileVault
+    profile has key escrow enabled. A blankpush will re-enforce the profile
+    if it is not applying correctly.
+  platform: darwin
+  critical: true

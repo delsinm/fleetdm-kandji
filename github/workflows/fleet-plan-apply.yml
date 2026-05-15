@@ -1,0 +1,107 @@
+name: Fleet Plan and Apply
+# place in .github/workflows/fleet-plan-apply.yml
+#
+# Mirrors the Terraform plan/apply pattern:
+#   Pull request  →  dry-run (shows what would change, posts as PR comment)
+#   Merge to main →  apply   (applies changes to Fleet server)
+#
+# fleetctl equivalent to terraform plan: fleetctl apply --dry-run
+#   Validates YAML and shows what would be created, modified, or deleted
+#   without touching the Fleet server. Safe to run on every PR.
+#
+# Secrets required (Settings → Secrets and variables → Actions):
+#   FLEET_URL        Base URL of your Fleet server
+#   FLEET_API_TOKEN  Fleet API bearer token (needs policy write access)
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'fleet/policies/**'   # only run when policy files change
+  push:
+    branches: [main]
+    paths:
+      - 'fleet/policies/**'
+
+jobs:
+  fleet-plan-apply:
+    name: Fleet Plan and Apply
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write    # required to post dry-run output as PR comment
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install fleetctl
+        run: npm install -g fleetctl
+
+      - name: Configure fleetctl
+        env:
+          FLEET_URL:       ${{ secrets.FLEET_URL }}
+          FLEET_API_TOKEN: ${{ secrets.FLEET_API_TOKEN }}
+        run: |
+          fleetctl config set --address "$FLEET_URL" --token "$FLEET_API_TOKEN"
+
+      # Fast syntax check -- does not connect to Fleet server
+      - name: Validate policy YAML
+        id: validate
+        run: fleetctl validate -f fleet/policies/
+
+      # If validation fails, post a comment to the PR
+      - name: Post Validation Failure Comment
+        if: failure() && steps.validate.outcome == 'failure' && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `#### Fleet Policy Validation Failed ❌
+              One or more policy files contain invalid YAML or Fleet schema errors.
+              Run the following locally to check:
+              \`\`\`
+              fleetctl validate -f fleet/policies/
+              \`\`\``
+            });
+
+      # On PRs -- dry-run to show what would change
+      - name: Fleet Dry Run (plan)
+        if: github.event_name == 'pull_request'
+        id: dry_run
+        run: |
+          OUTPUT=$(fleetctl apply --dry-run -f fleet/policies/ 2>&1)
+          echo "output<<EOF" >> $GITHUB_OUTPUT
+          echo "$OUTPUT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Post Dry Run as PR Comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const output = `#### Fleet Policy Dry Run 📋
+            Changes that would be applied to the Fleet server on merge:
+            \`\`\`
+            ${{ steps.dry_run.outputs.output }}
+            \`\`\`
+            > ℹ️ No changes have been made. Merge to main to apply.`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            });
+
+      # On merge to main -- apply for real
+      - name: Apply Fleet Policies
+        if: github.event_name == 'push'
+        run: fleetctl apply -f fleet/policies/
+
+      # Verify applied state matches what we expect
+      - name: Verify policies applied
+        if: github.event_name == 'push'
+        run: fleetctl get policies

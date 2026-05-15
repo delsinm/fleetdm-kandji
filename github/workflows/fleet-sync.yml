@@ -1,0 +1,56 @@
+# .github/workflows/fleet-sync.yml
+#
+# Fleet policy sync.
+#
+# Applies the Fleet policy YAML definitions in fleet/policies/ to the Fleet
+# server whenever changes to that directory are merged to main. This keeps
+# the Fleet server in sync with the policy definitions in the repository --
+# the repo is the source of truth for what Fleet checks.
+#
+# Also runs on manual trigger so policies can be force-synced if needed
+# (e.g. after a Fleet server rebuild or to verify sync state).
+#
+# What this does NOT do:
+#   - It does not modify remediation/policies.yml (the drift check watchlist)
+#   - It does not restart the drift check or any other service
+#   - It does not apply changes to Fleet queries or agent config (add steps
+#     below if you want to manage those via GitOps as well)
+#
+# Secrets required (set under Settings → Secrets and variables → Actions):
+#   FLEET_URL          Base URL of your Fleet server
+#   FLEET_API_TOKEN    Fleet API bearer token (needs policy write access)
+
+name: Fleet Policy Sync
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'fleet/policies/**'   # only runs when policy files change
+  workflow_dispatch:           # allow manual trigger from GitHub UI
+
+jobs:
+  fleet-sync:
+    name: Apply Fleet policies
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install fleetctl
+        run: npm install -g fleetctl
+
+      - name: Log in to Fleet
+        env:
+          FLEET_URL:       ${{ secrets.FLEET_URL }}
+          FLEET_API_TOKEN: ${{ secrets.FLEET_API_TOKEN }}
+        run: |
+          fleetctl config set --address "$FLEET_URL" --token "$FLEET_API_TOKEN"
+
+      - name: Apply policies
+        run: fleetctl apply -f fleet/policies/
+
+      - name: Verify policies applied
+        run: fleetctl get policies

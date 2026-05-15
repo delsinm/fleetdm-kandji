@@ -1,0 +1,91 @@
+---
+# internet-sharing-disabled.yml
+# FleetDM Policy: Internet sharing disabled
+#
+# Verifies that macOS Internet Sharing is disabled. Internet Sharing allows
+# an endpoint to act as a NAT gateway or wireless access point, routing
+# network traffic from other devices through its connection. On managed
+# endpoints this creates an unmonitored network path that bypasses perimeter
+# controls, firewall policy, and network monitoring infrastructure.
+#
+# Compliance mapping
+# ------------------
+# FedRAMP / NIST 800-53:
+#   CM-7      Least Functionality -- internet sharing is a non-essential
+#             service on managed endpoints that expands the attack surface
+#             and creates unmonitored network paths.
+#   SC-7      Boundary Protection -- a device acting as a NAT gateway or
+#             wireless AP creates a boundary bypass, routing traffic outside
+#             monitored network paths.
+#   SC-7(12)  Host-Based Protection -- host-based controls must prevent
+#             the endpoint from becoming an uncontrolled network relay.
+#   AC-4      Information Flow Enforcement -- internet sharing enables
+#             uncontrolled information flows between network segments,
+#             violating information flow policy.
+#
+# HIPAA:
+#   § 164.312(e)(1)  Transmission Security -- internet sharing creates
+#                   unmonitored transmission paths that could expose ePHI
+#                   to uncontrolled networks or devices.
+#   § 164.306(a)(1)  Confidentiality, Integrity, Availability -- an endpoint
+#                   acting as a network relay is a direct risk to
+#                   confidentiality of data traversing it.
+#
+# SOC 2:
+#   CC6.6  Logical access security against external threats -- internet
+#          sharing creates a network bridge that bypasses perimeter controls,
+#          exposing internal resources to external threats.
+#   CC6.7  Restricts transmission of confidential information -- shared
+#          network connections may route confidential data through
+#          uncontrolled paths to unmanaged devices.
+#
+#
+# ISO 27001:2022:
+#   A.8.20  Networks Security -- internet sharing turns an endpoint into
+#           an unmonitored network relay, bypassing network security controls
+#           and creating uncontrolled network paths.
+#   A.8.9   Configuration Management -- disabling internet sharing is part
+#           of the hardened baseline configuration for managed endpoints.
+# Resolution
+# ----------
+# Disable internet sharing via Kandji configuration profile or:
+#   System Settings > General > Sharing > Internet Sharing (ensure off)
+# Verify with osquery: SELECT * FROM sharing_preferences WHERE internet_sharing = 1;
+# (should return no rows if disabled)
+
+# Kandji enforcement
+# ------------------
+# Type:          Custom script (remediation)
+# Script:        Disable internet sharing
+# Assignment:    All blueprints
+# Verify:        Kandji → Library → Custom Scripts → Internet Sharing Disable assigned
+#
+# Create a Kandji custom script library item:
+#   #!/bin/bash
+#   # Disable internet sharing via defaults
+#   defaults write /Library/Preferences/SystemConfiguration/com.apple.nat NAT -dict-add Enabled -int 0
+#   # Stop the service if running
+#   launchctl unload /System/Library/LaunchDaemons/com.apple.InternetSharing.plist 2>/dev/null || true
+#
+# Set execution frequency to "Run periodically" (daily recommended).
+apiVersion: v1
+kind: policy
+spec:
+  name: Internet sharing disabled (macOS)
+  description: >
+    Checks that macOS Internet Sharing is disabled, preventing the endpoint
+    from acting as a NAT gateway or wireless access point. Internet sharing
+    creates unmonitored network paths that bypass perimeter controls. Satisfies
+    CM-7 (Least Functionality), SC-7 (Boundary Protection), HIPAA
+    § 164.312(e)(1) (Transmission Security), and SOC 2 CC6.6.
+  query: >
+    SELECT 1 FROM sharing_preferences
+    WHERE internet_sharing = 0;
+  resolution: >
+    Disable internet sharing via System Settings > General > Sharing >
+    Internet Sharing (ensure off). Deploy a Kandji custom script to enforce:
+    the setting is not reliably manageable via a standard configuration profile.
+    Verify: SELECT * FROM sharing_preferences WHERE internet_sharing = 1;
+    should return no rows.
+  platform: darwin
+  critical: true

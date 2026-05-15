@@ -1,0 +1,110 @@
+---
+# pci-session-timeout.yml
+# FleetDM Policy: PCI DSS session idle timeout (≤15 minutes)
+#
+# Verifies that the macOS screensaver idle timeout is configured to 15 minutes
+# (900 seconds) or less via a managed preference, satisfying the PCI DSS v4.0
+# maximum session idle timeout requirement.
+#
+# Relationship to screen-lock.yml
+# --------------------------------
+# This policy exists alongside screen-lock.yml, which enforces a 5-minute
+# timeout. The two policies serve different purposes:
+#
+#   screen-lock.yml         -- general security baseline (≤5 min, ≤300 seconds)
+#                              satisfies HIPAA, SOC 2, ISO 27001
+#
+#   pci-session-timeout.yml -- PCI DSS v4.0 specific requirement (≤15 min)
+#                              documents the explicit PCI sub-requirement and
+#                              provides a traceable evidence artifact for QSAs
+#
+# In practice, a 5-minute timeout satisfies both policies simultaneously.
+# This file exists to make the PCI DSS requirement explicitly traceable
+# to a named policy file rather than relying on auditors to infer coverage
+# from the general screen lock policy.
+#
+# PCI DSS v4.0 context
+# --------------------
+# Requirement 8.2.8 states: "If a session has been idle for more than
+# 15 minutes, the user is required to re-authenticate to re-activate
+# the terminal or session."
+#
+# This is a v4.0 requirement. The 15-minute threshold is the maximum
+# permitted -- shorter timeouts (like our 5-minute baseline) are compliant.
+#
+# Compliance mapping
+# ------------------
+# PCI DSS v4.0:
+#   Req 8.2.8   Session Idle Timeout -- requires re-authentication after
+#               no more than 15 minutes of session inactivity. The screensaver
+#               combined with password-required-after-lock.yml satisfies this
+#               requirement by locking the session and requiring credentials
+#               to resume.
+#
+# FedRAMP / NIST 800-53:
+#   AC-11     Session Lock -- requires session lock after inactivity.
+#             This policy satisfies AC-11 at the PCI-specific threshold.
+#   AC-11(1)  Pattern-Hiding Displays -- screensaver conceals session content.
+#
+# HIPAA:
+#   § 164.312(a)(2)(iii)  Automatic Logoff -- screen lock with password
+#                         satisfies the automatic logoff requirement.
+#
+# SOC 2:
+#   CC6.1  Logical access controls -- session timeout prevents unattended
+#          physical access to cardholder data environments.
+#
+# ISO 27001:2022:
+#   A.8.1   User Endpoint Devices -- session timeout is a required endpoint
+#           device control.
+#   A.8.5   Secure Authentication -- re-authentication after inactivity is
+#           a core secure authentication requirement.
+#
+# Kandji enforcement
+# ------------------
+# Type:          Configuration profile
+# Profile:       Custom profile — deploy com.apple.screensaver payload
+# Assignment:    All blueprints (or CDE-scoped blueprint for PCI environments)
+# Verify:        Kandji → Library → Custom Profiles → Screensaver profile assigned
+#
+# Use the same com.apple.screensaver profile as screen-lock.yml. A 5-minute
+# (300 second) idleTime satisfies both this policy and screen-lock.yml
+# simultaneously. No separate profile is needed -- set idleTime to 300 and
+# both policies will pass.
+#
+# Also ensure password-required-after-lock.yml is satisfied -- the session
+# timeout is only meaningful if a password is required to resume.
+#
+# Resolution
+# ----------
+# Deploy a Kandji configuration profile setting com.apple.screensaver idleTime
+# to 900 seconds or less (recommended: 300 seconds to satisfy both screen-lock
+# and PCI requirements simultaneously). Ensure askForPassword is also set to
+# true in the same profile. Verify with:
+#   sudo defaults read /Library/Preferences/com.apple.screensaver idleTime
+
+apiVersion: v1
+kind: policy
+spec:
+  name: PCI session idle timeout configured (macOS)
+  description: >
+    Checks that the macOS screensaver idle timeout is set to 15 minutes (900
+    seconds) or less via a managed preference, satisfying PCI DSS v4.0 Req 8.2.8
+    (Session Idle Timeout). A 5-minute timeout (screen-lock.yml) satisfies this
+    simultaneously. This policy exists to provide explicit, traceable PCI DSS
+    evidence for QSA assessments. Pair with password-required-after-lock.yml
+    to complete the re-authentication requirement.
+  query: >
+    SELECT 1 FROM managed_policies
+    WHERE domain = 'com.apple.screensaver'
+      AND name = 'idleTime'
+      AND CAST(value AS INTEGER) <= 900
+      AND username = '';
+  resolution: >
+    Deploy a Kandji configuration profile setting com.apple.screensaver idleTime
+    to 900 seconds or less. Recommended value is 300 seconds (5 minutes) to
+    satisfy both this policy and screen-lock.yml simultaneously. Also set
+    askForPassword to true in the same profile to satisfy the re-authentication
+    requirement. Verify: sudo defaults read /Library/Preferences/com.apple.screensaver
+  platform: darwin
+  critical: true

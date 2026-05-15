@@ -1,0 +1,82 @@
+---
+# gatekeeper-enabled.yml
+# FleetDM Policy: Gatekeeper enabled
+#
+# Verifies that macOS Gatekeeper is enabled and set to allow only apps from
+# the App Store and identified developers (signed with a valid Apple developer
+# certificate). Gatekeeper prevents execution of unsigned or tampered binaries
+# downloaded from the internet.
+#
+# Compliance mapping
+# ------------------
+# FedRAMP / NIST 800-53:
+#   SI-7      Software, Firmware, and Information Integrity -- Gatekeeper
+#             verifies cryptographic signatures before allowing execution.
+#   CM-11     User-Installed Software -- restricts software installation to
+#             sources that meet organisational policy.
+#   CM-7      Least Functionality -- reduces attack surface by blocking
+#             unsigned software from executing.
+#   SI-3      Malware Protection -- Gatekeeper's notarisation checks include
+#             malware scanning by Apple before an app is permitted to run.
+#
+# HIPAA:
+#   § 164.312(c)(1)  Integrity -- prevents execution of tampered or unsigned
+#                   software that could compromise ePHI integrity.
+#   § 164.306(a)(1)  Confidentiality, Integrity, Availability -- Gatekeeper
+#                   reduces risk of malicious software accessing ePHI.
+#
+# SOC 2:
+#   CC6.8  Prevents or detects unauthorised software -- Gatekeeper is a
+#          primary macOS control for blocking unauthorised application execution.
+#   CC7.2  Monitors system components for anomalies -- Gatekeeper failures
+#          indicate attempts to run unauthorised software.
+#
+#
+# ISO 27001:2022:
+#   A.8.7   Protection Against Malware -- Gatekeeper's code signing
+#           verification and notarisation checks implement malware
+#           protection at the software execution layer.
+#   A.8.9   Configuration Management -- Gatekeeper enabled state is
+#           part of the approved baseline configuration, restricting
+#           software to identified developer sources.
+# Resolution
+# ----------
+# Enable Gatekeeper via Kandji configuration profile or by running:
+#   sudo spctl --master-enable
+# Verify with: spctl --status (should return "assessments enabled")
+# Kandji can enforce this setting via a custom script library item.
+
+# Kandji enforcement
+# ------------------
+# Type:          Custom script (remediation)
+# Script:        Enable Gatekeeper
+# Assignment:    All blueprints
+# Verify:        Kandji → Library → Custom Scripts → Gatekeeper Enable assigned
+#
+# Create a Kandji custom script library item:
+#   #!/bin/bash
+#   spctl --master-enable
+#
+# Set execution frequency to "Run periodically" (daily recommended).
+# Gatekeeper state is not enforceable via a standard configuration profile —
+# it requires a script. Verify with: spctl --status
+# Expected output: "assessments enabled"
+apiVersion: v1
+kind: policy
+spec:
+  name: Gatekeeper enabled (macOS)
+  description: >
+    Checks that macOS Gatekeeper is enabled, requiring apps to be signed by an
+    identified developer before execution. Satisfies SI-7 (Software Integrity),
+    CM-11 (User-Installed Software), HIPAA § 164.312(c)(1), and SOC 2 CC6.8.
+  query: >
+    SELECT 1 FROM gatekeeper
+    WHERE assessments_enabled = 1;
+  resolution: >
+    Enable Gatekeeper via a Kandji configuration profile or run:
+    sudo spctl --master-enable
+    Verify with: spctl --status (expected output: "assessments enabled").
+    If repeatedly failing, investigate whether a user or script is disabling
+    Gatekeeper to install unsigned software.
+  platform: darwin
+  critical: true

@@ -1,0 +1,94 @@
+---
+# filevault-key-escrowed.yml
+# FleetDM Policy: FileVault recovery key escrowed
+#
+# Verifies that FileVault is enabled AND the recovery key has been escrowed to
+# the MDM (Kandji). This is a stronger check than disk-encryption.yml which only
+# confirms encryption is on. A device can have FileVault enabled with a personal
+# recovery key that is unknown to IT -- if the key is lost, the device is
+# unrecoverable. Escrowed keys ensure IT can recover the device and prove to
+# auditors that encryption is managed, not just present.
+#
+# Compliance mapping
+# ------------------
+# FedRAMP / NIST 800-53:
+#   SC-28     Protection of Information at Rest -- requires encryption of data
+#             at rest. Key escrow proves the encryption is organisationally
+#             managed and recoverable, satisfying the intent of the control.
+#   SC-28(1)  Cryptographic Protection -- escrow demonstrates that cryptographic
+#             keys are managed per organisational key management policy.
+#   CP-9      System Backup -- escrowed recovery keys ensure encrypted devices
+#             can be recovered, supporting business continuity requirements.
+#
+# HIPAA:
+#   § 164.312(a)(2)(iv)  Encryption and Decryption -- requires a mechanism to
+#                        encrypt and decrypt ePHI. Key escrow demonstrates the
+#                        organisation controls the decryption mechanism.
+#   § 164.312(e)(2)(ii)  Encryption of ePHI in Transit -- while this addresses
+#                        data at rest, key management practices apply across
+#                        both encryption requirements.
+#   § 164.310(d)(1)      Device and Media Controls -- escrowed keys support
+#                        secure device recovery and decommission procedures.
+#
+# SOC 2:
+#   CC6.1  Logical and physical access controls -- managed encryption keys
+#          demonstrate that access to encrypted data is organisationally
+#          controlled, not reliant on individual users.
+#   A1.2   Availability -- escrowed keys support recovery procedures,
+#          contributing to system availability commitments.
+#
+# Note
+# ----
+# This policy checks that disk_encryption.user_uuid is non-empty, which
+# indicates the recovery key has been sent to the MDM. Confirm in Kandji
+# that key escrow is enabled in the FileVault configuration profile.
+#
+#
+# ISO 27001:2022:
+#   A.8.24  Use of Cryptography -- key management is an explicit requirement
+#           of cryptography policy. Escrowed recovery keys demonstrate that
+#           cryptographic keys are organisationally managed and recoverable.
+#   A.8.1   User Endpoint Devices -- managed encryption with escrowed keys
+#           ensures endpoint data protection is organisationally controlled,
+#           not dependent on individual users.
+# Resolution
+# ----------
+# Ensure the Kandji FileVault configuration profile has "Escrow personal
+# recovery key" enabled. The device user may need to log out and back in
+# to trigger key escrow if FileVault was enabled before the profile was applied.
+# Verify escrow status in Kandji under Device > FileVault.
+
+# Kandji enforcement
+# ------------------
+# Type:          Configuration profile
+# Profile:       FileVault (same profile as disk-encryption.yml)
+# Assignment:    All blueprints
+# Verify:        Kandji → Library → FileVault → "Escrow personal recovery key" enabled
+#
+# Key escrow requires the device user to log out and back in after the
+# FileVault profile is applied. If escrow is not occurring, have the user
+# log out and back in, then verify in Kandji → Devices → [device] → FileVault.
+# This cannot be forced by MDM without user interaction.
+apiVersion: v1
+kind: policy
+spec:
+  name: FileVault recovery key escrowed (macOS)
+  description: >
+    Checks that FileVault is enabled and the recovery key has been escrowed to
+    Kandji (MDM). Stronger than checking encryption alone -- ensures IT can
+    recover the device and satisfies key management requirements. Satisfies
+    SC-28(1) (Cryptographic Protection), HIPAA § 164.312(a)(2)(iv) (Encryption
+    and Decryption), and SOC 2 CC6.1.
+  query: >
+    SELECT 1 FROM disk_encryption
+    WHERE filevault_status = 'on'
+      AND user_uuid != ''
+      AND user_uuid IS NOT NULL;
+  resolution: >
+    Verify that the Kandji FileVault configuration profile has key escrow
+    enabled. The user may need to log out and back in to trigger escrow if
+    FileVault predates the MDM profile. Check escrow status in Kandji under
+    Device > FileVault. If escrow is still not occurring, re-push the FileVault
+    profile via blankpush and have the user authenticate at next login.
+  platform: darwin
+  critical: true

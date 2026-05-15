@@ -1,0 +1,87 @@
+---
+# auto-updates-enabled.yml
+# FleetDM Policy: Automatic software update checks enabled
+#
+# Verifies that macOS is configured to automatically check for software updates
+# via a managed preference. This ensures the device is aware of available patches
+# and reduces the window between patch release and installation. Combined with
+# the OS up to date policy, this forms a complete SI-2 control pair:
+#   auto-updates-enabled.yml  -- device is checking for updates (process)
+#   os-up-to-date.yml         -- device has applied updates (outcome)
+#
+# Compliance mapping
+# ------------------
+# FedRAMP / NIST 800-53:
+#   SI-2      Flaw Remediation -- requires identifying, reporting, and correcting
+#             information system flaws. Automatic update checks are a required
+#             component of a flaw remediation program.
+#   SI-2(2)   Automated Flaw Remediation Status -- requires automated mechanisms
+#             to determine patch compliance state. This policy verifies the
+#             mechanism is enabled.
+#   CM-6      Configuration Settings -- automatic updates must be part of the
+#             approved baseline configuration for all endpoints.
+#
+# HIPAA:
+#   § 164.308(a)(5)(ii)(B)  Protection from Malicious Software -- requires
+#                           procedures for guarding against malicious software,
+#                           which includes timely patching.
+#   § 164.306(a)(1)         Risk Analysis -- unpatched systems represent a
+#                           known, preventable risk to ePHI confidentiality
+#                           and integrity.
+#
+# SOC 2:
+#   CC7.1  Detects and monitors for vulnerabilities -- automatic update checks
+#          are a foundational vulnerability management control.
+#   CC9.1  Identifies and assesses risk -- disabling update checks prevents
+#          the system from identifying patch-related risks.
+#
+#
+# ISO 27001:2022:
+#   A.8.8   Management of Technical Vulnerabilities -- requires timely
+#           identification and remediation of technical vulnerabilities.
+#           Automatic update checks are the mechanism that ensures the
+#           device is aware of available patches.
+#   A.8.9   Configuration Management -- automatic updates enabled is
+#           part of the approved baseline configuration for all endpoints.
+# Resolution
+# ----------
+# Deploy a Kandji configuration profile setting com.apple.SoftwareUpdate
+# AutomaticCheckEnabled to true. This controls whether the device checks Apple
+# servers for available updates. Note: this does not enforce automatic download
+# or installation -- pair with Kandji's OS enforcement library item for that.
+
+# Kandji enforcement
+# ------------------
+# Type:          Configuration profile
+# Profile:       Custom profile — deploy com.apple.SoftwareUpdate payload
+# Assignment:    All blueprints
+# Verify:        Kandji → Library → Custom Profiles → Software Update profile assigned
+#
+# Create a custom macOS configuration profile with the com.apple.SoftwareUpdate
+# payload setting AutomaticCheckEnabled to true. This is a managed preference —
+# users cannot disable automatic update checks while the profile is installed.
+#
+# Note: this controls whether the device checks for updates, not whether it
+# installs them. Pair with Kandji's OS Enforcement library item to enforce
+# installation within a defined deferral window.
+apiVersion: v1
+kind: policy
+spec:
+  name: Automatic updates enabled (macOS)
+  description: >
+    Checks that macOS is configured to automatically check for software updates
+    via a managed preference. Forms part of the SI-2 (Flaw Remediation) control
+    pair alongside the OS up to date policy. Satisfies SI-2, HIPAA
+    § 164.308(a)(5)(ii)(B) (Protection from Malicious Software), and SOC 2 CC7.1.
+  query: >
+    SELECT 1 FROM managed_policies
+    WHERE domain = 'com.apple.SoftwareUpdate'
+      AND name = 'AutomaticCheckEnabled'
+      AND value = '1';
+  resolution: >
+    Deploy a Kandji configuration profile setting com.apple.SoftwareUpdate
+    AutomaticCheckEnabled to true (1). This enables automatic update checks
+    but does not force installation -- pair with Kandji's OS enforcement
+    library item to enforce installation within a defined window.
+  platform: darwin
+  critical: false

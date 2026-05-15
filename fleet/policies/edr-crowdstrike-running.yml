@@ -1,0 +1,111 @@
+---
+# crowdstrike-running.yml
+# FleetDM Policy: CrowdStrike Falcon agent running
+#
+# Verifies that the CrowdStrike Falcon sensor process is actively running on
+# the endpoint. This is the availability check -- it confirms the EDR agent
+# is present and operational. Pair with crowdstrike-version.yml to also
+# verify the agent is running a current, supported version.
+#
+# This policy is one of three equivalent EDR running policies. Use the one
+# that matches your organisation's deployed EDR solution:
+#   crowdstrike-running.yml             -- CrowdStrike Falcon
+#   cisco-secure-endpoint-running.yml   -- Cisco Secure Endpoint
+#   sentinelone-running.yml             -- SentinelOne
+#
+# Together with crowdstrike-version.yml these two policies form a complete
+# SI-3 control pair:
+#   crowdstrike-running.yml   -- agent is present and running (availability)
+#   crowdstrike-version.yml   -- agent is current (effectiveness)
+#
+# Compliance mapping
+# ------------------
+# FedRAMP / NIST 800-53:
+#   SI-3      Malware Protection -- requires malware protection mechanisms
+#             to be employed at information system entry and exit points and
+#             at workstations. CrowdStrike Falcon is the primary endpoint
+#             malware protection control.
+#   SI-3(1)   Central Management -- requires central management of malware
+#             protection mechanisms. CrowdStrike console provides central
+#             visibility and management of all Falcon agents.
+#   SI-3(2)   Automatic Updates -- Falcon auto-updates detection capabilities
+#             from CrowdStrike cloud continuously.
+#   SI-4      Information System Monitoring -- Falcon's EDR capability
+#             contributes to continuous endpoint monitoring requirements.
+#
+# HIPAA:
+#   § 164.308(a)(5)(ii)(B)  Protection from Malicious Software -- explicitly
+#                           requires procedures for guarding against malicious
+#                           software, including virus checking and monitoring.
+#   § 164.306(a)(1)         Confidentiality, Integrity, Availability -- malware
+#                           on an endpoint represents a direct risk to all three
+#                           pillars of the Security Rule.
+#   § 164.312(b)            Audit Controls -- Falcon's process telemetry
+#                           contributes to audit trail requirements by recording
+#                           process execution events.
+#
+# SOC 2:
+#   CC6.8  Prevents or detects unauthorised software -- CrowdStrike Falcon is
+#          the primary control satisfying this criteria for endpoint detection
+#          and prevention of malicious software execution.
+#   CC7.2  Monitors system components for anomalies -- Falcon's behavioural
+#          detection engine continuously monitors endpoint activity for
+#          anomalous patterns indicative of compromise.
+#   CC7.3  Evaluates security events -- Falcon alerts feed into the security
+#          event evaluation and response process.
+#
+# ISO 27001:2022:
+#   A.8.7   Protection Against Malware -- requires controls against malware
+#           to be implemented, supported by user awareness. CrowdStrike Falcon
+#           is the primary technical control satisfying this requirement.
+#   A.8.16  Monitoring Activities -- requires monitoring of networks, systems,
+#           and applications for anomalous behaviour. Falcon's EDR capability
+#           provides continuous endpoint behavioural monitoring.
+#
+# Kandji enforcement
+# ------------------
+# Type:          Library item
+# Item:          CrowdStrike Falcon (install via Kandji's native CrowdStrike integration)
+# Assignment:    All blueprints — every managed device must have Falcon installed
+# Verify:        Kandji → Library → CrowdStrike Falcon → check "Assigned to blueprints"
+#
+# If this Fleet policy fails and Kandji has the library item assigned, the
+# blankpush triggered by drift_check.py will cause the device to check in
+# and Kandji will reinstall or restart the Falcon sensor automatically.
+#
+# If this policy fails repeatedly despite blankpushes, verify:
+#   1. CrowdStrike library item is assigned in the device's blueprint
+#   2. Device can reach CrowdStrike cloud endpoints (network/firewall)
+#   3. No prevention policy conflict in the CrowdStrike Falcon console
+#
+# Resolution
+# ----------
+# If CrowdStrike is not running:
+#   1. Check if the Falcon sensor is installed: ls /Applications/Falcon.app
+#   2. Attempt to start the service: sudo launchctl start com.crowdstrike.falcon.Agent
+#   3. If not installed, re-deploy via Kandji CrowdStrike library item
+#   4. If install fails, check network connectivity to CrowdStrike cloud endpoints
+#   5. Verify the device's CrowdStrike policy in the Falcon console allows
+#      the sensor to run (check for prevention policy conflicts)
+
+apiVersion: v1
+kind: policy
+spec:
+  name: CrowdStrike running
+  description: >
+    Checks that the CrowdStrike Falcon sensor process is actively running.
+    Primary endpoint malware protection and EDR control. Satisfies SI-3
+    (Malware Protection), SI-3(1) (Central Management), HIPAA
+    § 164.308(a)(5)(ii)(B) (Protection from Malicious Software), SOC 2 CC6.8,
+    and ISO 27001:2022 A.8.7. Pair with the CrowdStrike version current policy
+    for complete SI-3 coverage.
+  query: >
+    SELECT 1 FROM processes
+    WHERE name = 'falcond';
+  resolution: >
+    Verify CrowdStrike Falcon is installed at /Applications/Falcon.app.
+    Attempt to restart via: sudo launchctl start com.crowdstrike.falcon.Agent
+    If not installed, re-deploy via the Kandji CrowdStrike library item.
+    Check the CrowdStrike console for sensor policy conflicts if install fails.
+  platform: darwin
+  critical: true

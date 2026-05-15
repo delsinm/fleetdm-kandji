@@ -1,0 +1,72 @@
+# .github/workflows/drift-check.yml
+#
+# Scheduled compliance drift check.
+#
+# Runs drift_check.py on a regular schedule, polling FleetDM for any devices
+# currently failing watched policies and issuing Kandji blankpushes to
+# remediate them. Posts a summary to Slack if any drift is found.
+#
+# Schedule: hourly, 24/7 — no time restriction.
+# Continuous monitoring satisfies CA-7 (FedRAMP), CC7.2 (SOC 2), and
+# equivalent requirements across HIPAA and ISO 27001. Clean runs produce
+# no Slack message so off-hours execution has no operational impact.
+#
+# Secrets required (set under Settings → Secrets and variables → Actions):
+#   FLEET_URL          Base URL of your Fleet server
+#   FLEET_API_TOKEN    Fleet API bearer token
+#   SLACK_BOT_TOKEN    Slack bot token (xoxb-)
+#   SLACK_CHANNEL_ID   Slack channel ID for #it-security
+#   KANDJI_API_TOKEN   Kandji API bearer token
+#   KANDJI_SUBDOMAIN   Kandji subdomain (e.g. "acme" for acme.api.kandji.io)
+#
+# To trigger manually: Actions → Fleet Drift Check → Run workflow
+
+name: Fleet Drift Check
+
+on:
+  schedule:
+    - cron: '0 * * * *'    # hourly, 24/7 — continuous monitoring, no time restriction
+  workflow_dispatch:               # allow manual trigger from GitHub UI
+
+jobs:
+  drift-check:
+    name: Run compliance drift check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # Get the current year and week number to use as a cache key component.
+      # This forces the cache to bust every Monday regardless of repo activity,
+      # ensuring requests and pyyaml are updated at least once a week.
+      - name: Get current week
+        id: date
+        run: echo "week=$(date +'%Y-%U')" >> $GITHUB_OUTPUT
+
+      # Cache the pip download directory so dependencies don't need to be
+      # re-downloaded on every run. Cache busts weekly to pick up latest
+      # patch releases without pinning to specific versions.
+      - name: Cache pip downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: drift-check-${{ runner.os }}-${{ steps.date.outputs.week }}
+
+      - name: Install dependencies
+        run: pip install -r remediation/requirements.txt
+
+      - name: Run drift check
+        env:
+          FLEET_URL:        ${{ secrets.FLEET_URL }}
+          FLEET_API_TOKEN:  ${{ secrets.FLEET_API_TOKEN }}
+          SLACK_BOT_TOKEN:  ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
+          KANDJI_API_TOKEN: ${{ secrets.KANDJI_API_TOKEN }}
+          KANDJI_SUBDOMAIN: ${{ secrets.KANDJI_SUBDOMAIN }}
+        run: python remediation/drift_check.py

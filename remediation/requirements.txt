@@ -1,0 +1,8 @@
+# requirements.txt
+# Dependencies for drift_check.py
+# Pinned to minimum compatible versions -- weekly pip cache invalidation
+# in GitHub Actions ensures latest patch releases are picked up automatically.
+# Update minimum versions here when a major or breaking version is released.
+
+requests>=2.31.0
+pyyaml>=6.0.1

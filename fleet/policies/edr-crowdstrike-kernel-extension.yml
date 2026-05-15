@@ -1,0 +1,142 @@
+---
+# crowdstrike-kernel-extension.yml
+# FleetDM Policy: CrowdStrike Falcon kernel extension loaded
+#
+# Verifies that the CrowdStrike Falcon kernel extension (system extension on
+# Apple Silicon) is loaded and active. This is a stronger check than
+# crowdstrike-running.yml, which only confirms the agent process is present.
+#
+# The kernel extension is the component that provides CrowdStrike's core
+# protection capabilities -- process monitoring, network filtering, and
+# behavioural detection. Without the kernel extension loaded:
+#   - CrowdStrike may report as "running" but operate in a degraded state
+#   - Kernel-level threat detection is unavailable
+#   - Users with sufficient privileges could potentially terminate the agent
+#     process (the kernel extension prevents this)
+#
+# PCI DSS Req 5.3.3 requires that anti-malware cannot be disabled by users.
+# Verifying the kernel extension is loaded provides stronger evidence of this
+# than the process check alone, because the kernel extension:
+#   1. Runs at a privilege level above user processes
+#   2. Cannot be unloaded without SIP being disabled first
+#   3. Persists across agent process restarts
+#
+# Extension identifiers
+# ---------------------
+# Intel Macs (kext):   com.crowdstrike.sensor
+#                      com.crowdstrike.falcon.iokit
+# Apple Silicon (sext): com.crowdstrike.falcon.Agent (System Extension)
+#
+# The query checks both kext (Intel) and system extension (Apple Silicon)
+# identifiers. The kernel_extensions table covers both on Fleet 4.x+.
+#
+# Relationship to other CrowdStrike policies
+# ------------------------------------------
+# A complete CrowdStrike SI-3 control set consists of three policies:
+#   crowdstrike-running.yml             -- agent process is running
+#   crowdstrike-version.yml             -- agent meets minimum version
+#   crowdstrike-kernel-extension.yml    -- kernel extension is loaded (this file)
+#                                          PCI DSS specific -- proves cannot be
+#                                          disabled by users
+#
+# Compliance mapping
+# ------------------
+# PCI DSS v4.0:
+#   Req 5.3.3   Anti-malware solution cannot be altered, removed, or disabled
+#               by users. The kernel extension operating at ring 0 / kernel
+#               privilege level provides strong technical evidence that
+#               CrowdStrike cannot be disabled by a standard user or admin
+#               without first disabling SIP (which sip-enabled.yml detects).
+#   Req 5.2.1   Anti-malware solution deployed on all applicable components.
+#               Kernel extension presence confirms deep integration with the OS,
+#               not just a user-space process that could be killed.
+#   Req 10.7.2  Failures of critical security controls detected promptly.
+#               A missing kernel extension is a critical control failure that
+#               warrants immediate investigation.
+#
+# FedRAMP / NIST 800-53:
+#   SI-3      Malware Protection -- kernel extension confirms deep OS integration
+#             of malware protection, not just surface-level process presence.
+#   SI-3(1)   Central Management -- kernel extension is deployed and managed
+#             via Kandji system extension policy, centrally controlled.
+#   SC-39     Process Isolation -- kernel extension enforces process isolation
+#             by monitoring at the kernel level.
+#
+# HIPAA:
+#   § 164.308(a)(5)(ii)(B)  Protection from Malicious Software -- kernel-level
+#                           protection provides stronger malware defence than
+#                           user-space agents that can be terminated.
+#
+# SOC 2:
+#   CC6.8  Prevents or detects unauthorised software -- kernel extension
+#          provides OS-integrated prevention that users cannot bypass.
+#   CC7.2  Monitors system components for anomalies -- kernel-level monitoring
+#          provides more comprehensive behavioural analysis than user-space.
+#
+# ISO 27001:2022:
+#   A.8.7   Protection Against Malware -- kernel extension confirms malware
+#           protection is deeply integrated and cannot be bypassed by users.
+#
+# Kandji enforcement
+# ------------------
+# Type:          System Extension approval profile + CrowdStrike library item
+# Assignment:    All blueprints
+# Verify:        Kandji → Library → System Extensions → CrowdStrike approved
+#                Kandji → Library → Privacy Preferences → Full Disk Access granted
+#
+# Deploying the kernel extension requires two Kandji profile components:
+#
+#   1. System Extension Allowlist profile (required for Apple Silicon):
+#      Allow Team ID: X9E956P446
+#      Bundle ID:     com.crowdstrike.falcon.Agent
+#
+#   2. Privacy Preferences Policy Control (PPPC) profile:
+#      App: /Applications/Falcon.app
+#      Service: SystemPolicyAllFiles (Full Disk Access): Allow
+#
+# Without these profiles, macOS will block the extension and prompt users
+# to approve it manually. Pre-approval via MDM ensures silent deployment.
+#
+# If this policy fails despite CrowdStrike being installed:
+#   1. Verify System Extension approval profile is in the device's blueprint
+#   2. Verify PPPC profile is in the device's blueprint
+#   3. Check: systemextensionsctl list | grep crowdstrike
+#   4. Check: sudo kextstat | grep crowdstrike (Intel only)
+#   5. If SIP is disabled (sip-enabled.yml failing), fix SIP first --
+#      the kernel extension requires SIP to be enabled to load correctly
+#
+# Resolution
+# ----------
+# If the kernel extension is not loaded:
+#   1. Verify System Extension and PPPC profiles are in Kandji blueprint
+#   2. Check extension status: systemextensionsctl list | grep crowdstrike
+#   3. If blocked by user: profiles show -all | grep crowdstrike
+#   4. Re-deploy CrowdStrike via Kandji blankpush to force blueprint re-apply
+#   5. Verify SIP is enabled (sip-enabled.yml) -- required for kext loading
+#   6. If still failing, check CrowdStrike console for sensor policy issues
+
+apiVersion: v1
+kind: policy
+spec:
+  name: CrowdStrike kernel extension loaded (macOS)
+  description: >
+    Checks that the CrowdStrike Falcon kernel/system extension is loaded,
+    providing stronger evidence than the process check alone that CrowdStrike
+    cannot be disabled by users (PCI DSS v4.0 Req 5.3.3). The extension
+    operates at kernel privilege level and cannot be unloaded without disabling
+    SIP. Satisfies PCI DSS Req 5.3.3 (Anti-malware cannot be disabled), SI-3
+    (Malware Protection), SOC 2 CC6.8, and ISO 27001:2022 A.8.7. Requires
+    System Extension approval and PPPC profiles in Kandji blueprint.
+  query: >
+    SELECT 1 FROM kernel_extensions
+    WHERE identifier LIKE '%crowdstrike%'
+       OR identifier LIKE '%falcon%';
+  resolution: >
+    Verify System Extension allowlist profile (Team ID: X9E956P446) and PPPC
+    Full Disk Access profile are in the device's Kandji blueprint. Check status:
+    systemextensionsctl list | grep crowdstrike
+    Re-deploy CrowdStrike via blankpush if profiles are present but extension
+    is not loaded. Verify SIP is enabled (required for extension loading).
+    Check CrowdStrike console for sensor policy issues if extension fails to load.
+  platform: darwin
+  critical: true

@@ -1,0 +1,82 @@
+---
+# guest-account-disabled.yml
+# FleetDM Policy: Guest account disabled
+#
+# Verifies that the macOS Guest account is disabled via a managed preference.
+# The Guest account allows unauthenticated local access to the machine without
+# any credentials, bypassing identification and authentication controls entirely.
+#
+# Compliance mapping
+# ------------------
+# FedRAMP / NIST 800-53:
+#   AC-2      Account Management -- requires accounts to be formally provisioned
+#             and assigned to identified individuals. Guest accounts have no
+#             assigned individual and cannot be audited.
+#   AC-2(9)   Restrictions on Use of Shared and Group Accounts -- Guest is
+#             effectively an anonymous shared account.
+#   IA-2      Identification and Authentication -- requires all users to be
+#             uniquely identified. Guest access provides no identification.
+#   AC-3      Access Enforcement -- access must be enforced based on approved
+#             authorisations. Guest access bypasses this entirely.
+#
+# HIPAA:
+#   § 164.312(a)(1)  Access Control -- requires unique user identification.
+#                   Guest account provides no unique identification and must
+#                   not be permitted on systems that may access ePHI.
+#   § 164.312(b)     Audit Controls -- Guest sessions cannot be attributed to
+#                   an individual, breaking audit trail requirements.
+#
+# SOC 2:
+#   CC6.1  Logical access controls -- requires access to be restricted to
+#          authorised users. Guest account bypasses this control.
+#   CC6.2  Prior to issuing system credentials -- Guest account is not issued
+#          through any formal provisioning process.
+#
+#
+# ISO 27001:2022:
+#   A.8.3   Information Access Restriction -- the guest account provides
+#           unauthenticated access to the device, bypassing information
+#           access restriction controls entirely.
+#   A.8.2   Privileged Access Rights -- while not privileged, the guest
+#           account represents an unprovisioned access right that must
+#           be removed per access management requirements.
+# Resolution
+# ----------
+# Disable the Guest account via Kandji configuration profile setting
+# com.apple.loginwindow GuestEnabled to false. Verify via:
+#   defaults read /Library/Preferences/com.apple.loginwindow GuestEnabled
+# Expected output: 0
+
+# Kandji enforcement
+# ------------------
+# Type:          Configuration profile
+# Profile:       Custom profile — deploy com.apple.loginwindow payload
+# Assignment:    All blueprints
+# Verify:        Kandji → Library → Custom Profiles → Login Window profile assigned
+#
+# Create a custom macOS configuration profile with the com.apple.loginwindow
+# payload setting GuestEnabled to false. This is a managed preference —
+# users cannot re-enable the Guest account while the profile is installed.
+# Combine with the login window display policy in the same profile.
+apiVersion: v1
+kind: policy
+spec:
+  name: Guest account disabled (macOS)
+  description: >
+    Checks that the macOS Guest account is disabled via a managed preference.
+    Guest access allows unauthenticated local login with no audit trail.
+    Satisfies AC-2 (Account Management), IA-2 (Identification and Authentication),
+    HIPAA § 164.312(a)(1) (Access Control), and SOC 2 CC6.1.
+  query: >
+    SELECT 1 FROM managed_policies
+    WHERE domain = 'com.apple.loginwindow'
+      AND name = 'GuestEnabled'
+      AND value = '0';
+  resolution: >
+    Deploy a Kandji configuration profile setting com.apple.loginwindow
+    GuestEnabled to false (0). Verify with:
+    defaults read /Library/Preferences/com.apple.loginwindow GuestEnabled
+    Expected output: 0. Trigger a Kandji blankpush if the profile is not
+    applying correctly.
+  platform: darwin
+  critical: true

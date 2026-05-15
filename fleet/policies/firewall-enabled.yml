@@ -1,0 +1,110 @@
+---
+# firewall-enabled.yml
+# FleetDM Policy: macOS application firewall enabled
+#
+# Verifies that the macOS application-layer firewall is enabled. The macOS
+# firewall operates at the application level, blocking unsolicited inbound
+# connections to specific applications rather than operating at the packet
+# level like a network firewall. It is a defence-in-depth control that
+# reduces the endpoint's attack surface by preventing uninvited inbound
+# connections from reaching listening services.
+#
+# Note: this policy checks the application firewall (socketfilterfw), not
+# pf (packet filter). Both are distinct macOS firewall subsystems. For
+# FedRAMP High environments, consider also enabling stealth mode, which
+# prevents the device from responding to probe requests (ICMP, port scans).
+#
+# Compliance mapping
+# ------------------
+# FedRAMP / NIST 800-53:
+#   SC-7      Boundary Protection -- requires the information system to
+#             monitor and control communications at external boundaries.
+#             The macOS firewall provides host-based boundary protection
+#             at the endpoint level.
+#   SC-7(12)  Host-Based Protection -- explicitly requires host-based
+#             boundary protection mechanisms. The macOS application
+#             firewall directly satisfies this enhancement.
+#   CM-7      Least Functionality -- requires the system to be configured
+#             to provide only essential capabilities. The firewall enforces
+#             this by blocking uninvited inbound connections to non-essential
+#             services.
+#   CM-7(1)   Periodic Review -- firewall policy should be reviewed
+#             periodically to ensure only required services are permitted.
+#   AC-17     Remote Access -- firewall controls inbound remote connection
+#             attempts, supporting remote access management requirements.
+#
+# HIPAA:
+#   § 164.312(e)(1)      Transmission Security -- requires security measures
+#                        to guard against unauthorised access to ePHI
+#                        transmitted over networks. Host firewall is a
+#                        required component of transmission security.
+#   § 164.312(c)(1)      Integrity -- by blocking unsolicited inbound
+#                        connections, the firewall reduces risk of
+#                        unauthorised modification of data or system state.
+#   § 164.306(a)(1)      Confidentiality, Integrity, Availability -- firewall
+#                        is a foundational technical safeguard across all
+#                        three pillars of the HIPAA Security Rule.
+#
+# SOC 2:
+#   CC6.1  Logical and physical access controls -- the host firewall enforces
+#          network-level access controls at the endpoint, restricting which
+#          inbound connections are permitted to reach running services.
+#   CC6.6  Logical access security measures against threats from outside --
+#          host-based firewall is a primary control against external network
+#          threats targeting the endpoint directly.
+#   CC7.2  Monitors system components for anomalies -- firewall logging
+#          (when enabled) contributes to network anomaly detection.
+#
+#
+# ISO 27001:2022:
+#   A.8.20  Networks Security -- requires security mechanisms, service levels,
+#           and management requirements for networks to be identified and
+#           implemented. Host-based firewall is a required endpoint network
+#           security control.
+#   A.8.9   Configuration Management -- firewall enabled state is part of
+#           the secure baseline configuration for all managed endpoints.
+# Resolution
+# ----------
+# Enable the macOS application firewall via Kandji configuration profile
+# (preferred) or manually:
+#   System Settings > Network > Firewall > Turn On
+# Verify state with: /usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate
+# Expected output: "Firewall is enabled."
+# For FedRAMP endpoints also enable stealth mode:
+#   sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setstealthmode on
+
+# Kandji enforcement
+# ------------------
+# Type:          Configuration profile
+# Profile:       Custom profile — deploy com.apple.alf payload
+# Assignment:    All blueprints
+# Verify:        Kandji → Library → Custom Profiles → Firewall profile assigned
+#
+# Kandji does not have a native firewall library item. Deploy a custom
+# macOS configuration profile with the com.apple.alf payload setting
+# globalstate to 1 (on) or 2 (on, block all incoming). Upload the profile
+# under Kandji → Library → Custom Profiles.
+#
+# For FedRAMP endpoints also set stealthenabled to 1 in the same profile.
+apiVersion: v1
+kind: policy
+spec:
+  name: Firewall enabled
+  description: >
+    Checks that the macOS application-layer firewall is enabled, blocking
+    unsolicited inbound connections to applications. Provides host-based
+    boundary protection at the endpoint level. Satisfies SC-7 (Boundary
+    Protection), SC-7(12) (Host-Based Protection), CM-7 (Least Functionality),
+    HIPAA § 164.312(e)(1) (Transmission Security), and SOC 2 CC6.6.
+  query: >
+    SELECT 1 FROM alf
+    WHERE global_state >= 1;
+  resolution: >
+    Enable the firewall via Kandji configuration profile or System Settings >
+    Network > Firewall > Turn On. Verify with:
+    /usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate
+    Expected output: "Firewall is enabled." For FedRAMP endpoints also enable
+    stealth mode: sudo /usr/libexec/ApplicationFirewall/socketfilterfw
+    --setstealthmode on
+  platform: darwin
+  critical: true

@@ -11,7 +11,7 @@ The watched policy list is maintained in `remediation/policies.yml`.
 
 > **EDR note:** Entries referencing CrowdStrike also apply to Cisco Secure Endpoint
 > and SentinelOne. Substitute the appropriate policy file for your deployed EDR:
-> `crowdstrike-*.yml` → `cisco-secure-endpoint-*.yml` or `sentinelone-*.yml`
+> `edr-crowdstrike-*.yml` → `edr-cisco-secure-endpoint-*.yml` or `edr-sentinelone-*.yml`
 
 ---
 

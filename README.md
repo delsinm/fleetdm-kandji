@@ -77,6 +77,8 @@ FleetDM                    Kandji                     Slack
 
 **Slack** is where your team gets notified. Rather than logging into FleetDM to check compliance status, the system posts alerts and summary reports directly to your configured Slack channel.
 
+**Logs** are produced in JSON format for easy ingestion into your SIEM, maintaining a "single pane of glass" for your endpoint security.
+
 ---
 
 ## The script

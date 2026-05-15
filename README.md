@@ -109,7 +109,7 @@ Policies are organised into categories:
 
 | Category                   | Policies                                                                                                      |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Malware & Threat Detection | CrowdStrike running, CrowdStrike version current                                                              |
+| Malware & Threat Detection | EDR software running, EDR software version current                                                            |
 | Encryption                 | Disk encryption, FileVault key escrowed                                                                       |
 | Network & Boundary         | Firewall, SSH, Screen sharing, Remote management, AirDrop, Internet sharing, Printer sharing, Content caching |
 | System Integrity           | SIP enabled, Gatekeeper enabled                                                                               |
@@ -340,13 +340,13 @@ When the drift check posts a summary:
 3. Find the device in Kandji to confirm the blankpush was received
 4. If the device is still failing after the next drift check run, investigate manually
 
-### Updating the CrowdStrike version threshold
+### Example: Updating the CrowdStrike version threshold
 
 The `crowdstrike-version.yml` policy checks against a minimum agent version.  
 Update it quarterly or when CrowdStrike releases a new required minimum:
 
 ```yaml
-# fleet/policies/crowdstrike-version.yml
+# fleet/policies/edr-crowdstrike-version.yml
 query: >
   SELECT 1 FROM apps
   WHERE name = 'Falcon.app'

@@ -41,7 +41,7 @@ MDM enforcement can silently fail or be undone:
 | Device offline when profile was pushed | Misses it until next check-in  | Detects on next drift run  |
 | Profile delivery silently failed       | Thinks device is compliant     | Detects the actual state   |
 | User manually disabled a control       | Already enforced — now drifted | Detects and re-enforces    |
-| EDR software crashed after install      | Enforced at install time       | Detects it stopped running |
+| EDR software crashed after install     | Enforced at install time       | Detects it stopped running |
 | New device not yet fully enrolled      | Controls not yet applied       | Detects missing controls   |
 
 
@@ -231,7 +231,7 @@ it-infrastructure/
 │
 ├── archive/
 │   ├── README.md                    ← explains archived contents
-│   └── fleet_remediation.py        ← real-time webhook handler (not deployed)
+│   └── fleet_remediation.py         ← real-time webhook handler (not deployed)
 │
 └── .github/
     └── workflows/

@@ -1,0 +1,107 @@
+---
+# airdrop-disabled.yml
+# FleetDM Policy: AirDrop disabled
+#
+# Verifies that AirDrop is disabled via a managed preference. AirDrop uses
+# Bluetooth and Wi-Fi to transfer files between nearby Apple devices without
+# authentication when set to "Everyone" -- and even in "Contacts Only" mode,
+# it creates an ad-hoc file transfer channel that bypasses DLP controls,
+# network monitoring, and data governance policies.
+#
+# On devices that may process ePHI or confidential business data, AirDrop
+# represents an unmonitored data exfiltration path. Disabling it via MDM
+# ensures the setting cannot be re-enabled by the user.
+#
+# Compliance mapping
+# ------------------
+# FedRAMP / NIST 800-53:
+#   AC-19     Access Control for Mobile Devices -- requires restrictions on
+#             the use of mobile device connection capabilities. AirDrop is a
+#             wireless connection capability that must be controlled.
+#   AC-20     Use of External Information Systems -- AirDrop transfers data
+#             to external devices (personal phones, personal Macs) outside
+#             organisational control, which must be restricted.
+#   SC-8      Transmission Confidentiality and Integrity -- AirDrop transmits
+#             data over local wireless without organisational monitoring.
+#             Disabling prevents uncontrolled wireless data transmission.
+#   MP-7      Media Use -- restricts the use of information system media
+#             on external systems. AirDrop is functionally equivalent to
+#             uncontrolled removable media transfer.
+#
+# HIPAA:
+#   § 164.312(e)(2)(ii)  Encryption of ePHI in Transit -- AirDrop uses
+#                        encryption but transfers data to devices outside
+#                        organisational control with no audit trail.
+#                        Disabling prevents inadvertent ePHI transfer.
+#   § 164.310(d)(1)      Device and Media Controls -- requires policies for
+#                        the receipt and removal of hardware and media.
+#                        AirDrop enables uncontrolled media transfer equivalent
+#                        to inserting a USB drive.
+#   § 164.308(a)(1)(ii)(B) Risk Management -- uncontrolled AirDrop represents
+#                        a data loss risk that must be addressed as part of
+#                        the risk management program.
+#
+# SOC 2:
+#   CC6.7  Restricts transmission of confidential information to authorised
+#          parties -- AirDrop enables transfer of confidential data to
+#          unmanaged personal devices with no monitoring or attribution.
+#          Disabling directly satisfies this criteria for wireless transfers.
+#   CC6.1  Logical access controls -- AirDrop bypasses access controls by
+#          creating a direct device-to-device channel outside normal
+#          network monitoring and DLP infrastructure.
+#   CC2.2  Communicates internally -- disabling AirDrop enforces that
+#          file sharing occurs through approved, monitored channels.
+#
+#
+# ISO 27001:2022:
+#   A.8.1   User Endpoint Devices -- requires controls to protect information
+#           on endpoint devices including restrictions on data transfer
+#           capabilities to unmanaged devices.
+#   A.8.3   Information Access Restriction -- AirDrop enables uncontrolled
+#           transfer of information to devices outside organisational control,
+#           bypassing information access restrictions.
+# Resolution
+# ----------
+# Disable AirDrop via Kandji configuration profile setting
+# com.apple.NetworkBrowser DisableAirDrop to true.
+# Verify with:
+#   defaults read com.apple.NetworkBrowser DisableAirDrop
+# Expected output: 1
+# Users attempting to use AirDrop will see it as unavailable in Finder
+# and the Control Center AirDrop toggle will be greyed out.
+
+# Kandji enforcement
+# ------------------
+# Type:          Configuration profile
+# Profile:       Custom profile — deploy com.apple.NetworkBrowser payload
+# Assignment:    All blueprints
+# Verify:        Kandji → Library → Custom Profiles → AirDrop Disable profile assigned
+#
+# Create a custom macOS configuration profile with the com.apple.NetworkBrowser
+# payload setting DisableAirDrop to true. Upload under Kandji → Library →
+# Custom Profiles. This is a managed preference — users cannot re-enable
+# AirDrop while the profile is installed.
+apiVersion: v1
+kind: policy
+spec:
+  name: AirDrop disabled (macOS)
+  description: >
+    Checks that AirDrop is disabled via a managed preference profile. AirDrop
+    creates an unmonitored file transfer channel to nearby devices outside
+    organisational control, bypassing DLP and audit controls. Satisfies
+    AC-19 (Mobile Device Access Control), SC-8 (Transmission Confidentiality),
+    HIPAA § 164.312(e)(2)(ii) (Encryption of ePHI in Transit), and
+    SOC 2 CC6.7 (Restricts Transmission of Confidential Information).
+  query: >
+    SELECT 1 FROM managed_policies
+    WHERE domain = 'com.apple.NetworkBrowser'
+      AND name = 'DisableAirDrop'
+      AND value = '1';
+  resolution: >
+    Deploy a Kandji configuration profile setting com.apple.NetworkBrowser
+    DisableAirDrop to true. Verify with:
+    defaults read com.apple.NetworkBrowser DisableAirDrop
+    Expected output: 1. AirDrop will be greyed out in Finder and Control Center.
+    Trigger a blankpush if the profile is not applying correctly.
+  platform: darwin
+  critical: false

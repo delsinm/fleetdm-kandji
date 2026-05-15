@@ -1,0 +1,126 @@
+---
+# no-local-admin-accounts.yml
+# FleetDM Policy: No unauthorized local administrator accounts
+#
+# Verifies that no local user accounts hold administrator (admin group)
+# membership beyond those explicitly authorised by IT. Local admin rights
+# allow a user to install software, modify system settings, disable security
+# controls, and escalate privileges -- significantly increasing the blast
+# radius of a compromised account or malicious insider.
+#
+# This policy checks that the only admin account is the MDM management account
+# or a designated IT admin account. Standard users should not be local admins.
+#
+# Implementation note
+# -------------------
+# The query below flags any device where a non-system user (uid >= 500) is a
+# member of the admin group. Adjust the uid threshold or add an exclusion for
+# your MDM management account name if needed. Fleet policy failures should be
+# reviewed manually to confirm the account is unauthorised before remediating.
+#
+# Compliance mapping
+# ------------------
+# FedRAMP / NIST 800-53:
+#   AC-6      Least Privilege -- requires that users are granted only the
+#             access required for their role. Local admin rights for standard
+#             users violates least privilege.
+#   AC-6(1)   Authorize Access to Security Functions -- admin accounts have
+#             access to security-relevant functions and must be explicitly
+#             authorised.
+#   AC-6(5)   Privileged Accounts -- requires restriction of privileged
+#             accounts to those with a demonstrated need. Standard users
+#             should operate without admin rights.
+#   AC-2      Account Management -- requires formal provisioning of accounts
+#             with defined access levels. Unauthorised admin accounts indicate
+#             an account management process failure.
+#
+# HIPAA:
+#   § 164.312(a)(1)  Access Control -- requires implementation of technical
+#                   policies to allow only authorised persons to access ePHI.
+#                   Local admin rights give users the ability to bypass access
+#                   controls and security software.
+#   § 164.312(a)(2)(i) Unique User Identification -- each user must have a
+#                   unique identifier. Shared or unauthorised admin accounts
+#                   undermine individual accountability.
+#   § 164.308(a)(3)  Workforce Access Management -- requires implementing
+#                   procedures to authorise access based on role. Admin rights
+#                   must align with documented role requirements.
+#
+# SOC 2:
+#   CC6.3  Role-based access controls -- admin group membership must align
+#          with defined roles and be formally authorised. Unauthorised admin
+#          accounts indicate a breakdown in role-based access controls.
+#   CC6.1  Logical access controls -- excessive privileges undermine the
+#          principle of least privilege, a core logical access control.
+#   CC6.2  Prior to issuing system credentials -- admin rights should only
+#          be granted through a formal provisioning and approval process.
+#
+#
+# ISO 27001:2022:
+#   A.8.2   Privileged Access Rights -- requires restriction, control, and
+#           monitoring of privileged access rights. Local administrator
+#           rights are a form of privileged access that must be formally
+#           authorised and minimised.
+#   A.8.3   Information Access Restriction -- admin rights allow users to
+#           bypass information access restrictions. Unauthorised admin
+#           accounts represent a breakdown in access restriction controls.
+# Resolution
+# ----------
+# Remove admin rights from unauthorised accounts via Kandji custom script:
+#   sudo dseditgroup -o edit -d <username> -t user admin
+# Verify with: dscl . -read /Groups/admin GroupMembership
+# Standard users should authenticate via a separate IT admin account for
+# privileged operations (e.g. software installation) rather than holding
+# permanent admin rights.
+
+# Kandji enforcement
+# ------------------
+# Type:          Custom script (remediation)
+# Script:        Remove unauthorized local admin rights
+# Assignment:    All blueprints
+# Verify:        Kandji → Library → Custom Scripts → Admin Rights Audit assigned
+#
+# This policy requires manual review before automated remediation — removing
+# admin rights from a legitimate IT account would break management workflows.
+# Recommended approach:
+#
+#   Audit script (run periodically, report only):
+#     #!/bin/bash
+#     dscl . -read /Groups/admin GroupMembership
+#
+#   Remediation script (run manually after review):
+#     #!/bin/bash
+#     sudo dseditgroup -o edit -d <username> -t user admin
+#
+# Set the audit script to "Run periodically" and review output in
+# Kandji → Devices → [device] → Activity before taking remediation action.
+apiVersion: v1
+kind: policy
+spec:
+  name: No unauthorized local admin accounts (macOS)
+  description: >
+    Checks that no standard user accounts (uid >= 500) hold local administrator
+    group membership beyond authorised IT accounts. Local admin rights allow
+    users to bypass security controls and install unapproved software. Satisfies
+    AC-6 (Least Privilege), AC-6(5) (Privileged Accounts), HIPAA
+    § 164.312(a)(1) (Access Control), and SOC 2 CC6.3 (Role-Based Access).
+    Review failures manually before remediating -- some admin accounts may
+    be legitimately provisioned.
+  query: >
+    SELECT 1 FROM users
+    WHERE uid >= 500
+      AND uid < 65534
+      AND username NOT IN ('admin', '_mbsetupuser')
+      AND username IN (
+        SELECT username FROM groups
+        WHERE groupname = 'admin'
+      );
+  resolution: >
+    Remove admin rights from unauthorised accounts:
+    sudo dseditgroup -o edit -d <username> -t user admin
+    Verify: dscl . -read /Groups/admin GroupMembership
+    Standard users should use a separate IT admin account for privileged
+    operations. Update Kandji blueprint to enforce standard user role.
+    Review and document any legitimately authorised admin accounts.
+  platform: darwin
+  critical: true

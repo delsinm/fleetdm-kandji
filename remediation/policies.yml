@@ -1,0 +1,137 @@
+# policies.yml
+#
+# List of FleetDM policy names to watch during drift checks.
+# Names must match exactly what is configured in Fleet (case-sensitive).
+#
+# To add or remove a policy, edit this file and commit -- no code change needed.
+# Each policy name corresponds to a YAML definition under fleet/policies/.
+# See FEDRAMP-MATRIX.md, HIPAA-MATRIX.md, SOC2-MATRIX.md for framework mapping.
+#
+# Compliance coverage summary
+# ---------------------------
+# FedRAMP / NIST 800-53:  AC-2, AC-3, AC-4, AC-6, AC-11, AC-17, AC-19, AC-20,
+#                          AU-2, AU-3, AU-8, AU-8(1), AU-9, AU-12, CM-6, CM-7,
+#                          CM-7(1), CM-11, IA-2, IA-5, MA-4, MP-5, MP-7, MP-8,
+#                          RA-5, SC-7, SC-8, SC-28, SC-39, SI-2, SI-3, SI-7
+# HIPAA:                   § 164.306, § 164.308, § 164.310, § 164.312
+# SOC 2 (TSC):             CC6.1, CC6.2, CC6.3, CC6.6, CC6.7, CC6.8,
+#                          CC7.1, CC7.2, CC7.3, CC8.1, A1.2
+
+policies:
+  # --- Malware & Threat Detection ----------------------------------
+  #
+  # EDR SELECTION: choose ONE of the three EDR options below based on your
+  # organisation's deployment. Do not enable more than one simultaneously.
+  #
+  # Option A: CrowdStrike Falcon (current deployment)
+  # Option B: Cisco Secure Endpoint
+  # Option C: SentinelOne
+  #
+  # To switch EDR providers:
+  #   1. Comment out the active EDR lines
+  #   2. Uncomment the alternative EDR lines
+  #   3. Ensure the corresponding fleet/policies/*.yml is applied via fleetctl
+  #   4. Verify the new EDR library item is assigned in Kandji blueprints
+
+  # --- Option A: CrowdStrike Falcon --------------------------------
+
+  # SI-3, SI-3(1), SI-4 | HIPAA § 164.308(a)(5)(ii)(B) | SOC 2 CC6.8, CC7.2
+  - CrowdStrike running
+
+  # SI-3, SI-2 | HIPAA § 164.308(a)(5)(ii)(B) | SOC 2 CC6.8
+  - CrowdStrike version current (macOS)
+
+  # --- Option B: Cisco Secure Endpoint (uncomment to use instead) --
+
+  # SI-3, SI-3(1), SI-4 | HIPAA § 164.308(a)(5)(ii)(B) | SOC 2 CC6.8, CC7.2
+  # - Cisco Secure Endpoint running (macOS)
+
+  # SI-3, SI-2 | HIPAA § 164.308(a)(5)(ii)(B) | SOC 2 CC6.8
+  # - Cisco Secure Endpoint version current (macOS)
+
+  # --- Option C: SentinelOne (uncomment to use instead) -----------
+
+  # SI-3, SI-3(1), SI-4 | HIPAA § 164.308(a)(5)(ii)(B) | SOC 2 CC6.8, CC7.2
+  # - SentinelOne running (macOS)
+
+  # SI-3, SI-2 | HIPAA § 164.308(a)(5)(ii)(B) | SOC 2 CC6.8
+  # - SentinelOne version current (macOS)
+
+  # --- Encryption --------------------------------------------------
+
+  # SC-28, MP-5 | HIPAA § 164.312(a)(2)(iv) | SOC 2 CC6.1, CC6.7
+  - Disk encryption enabled (macOS)
+
+  # SC-28(1), CP-9 | HIPAA § 164.312(a)(2)(iv) | SOC 2 CC6.1, A1.2
+  - FileVault recovery key escrowed (macOS)
+
+  # --- Network & Boundary ------------------------------------------
+
+  # SC-7, SC-7(12), CM-7 | HIPAA § 164.312(e)(1) | SOC 2 CC6.6
+  - Firewall enabled
+
+  # CM-7, AC-17 | HIPAA § 164.312(e)(1) | SOC 2 CC6.6
+  - SSH remote login disabled (macOS)
+
+  # CM-7, AC-17 | HIPAA § 164.312(e)(1) | SOC 2 CC6.6
+  - Screen sharing disabled (macOS)
+
+  # CM-7, AC-17, MA-4 | HIPAA § 164.312(e)(1) | SOC 2 CC6.6, CC8.1
+  - Remote management disabled (macOS)
+
+  # AC-19, SC-8, MP-7 | HIPAA § 164.312(e)(2)(ii) | SOC 2 CC6.7
+  - AirDrop disabled (macOS)
+
+  # CM-7, SC-7, AC-4 | HIPAA § 164.312(e)(1) | SOC 2 CC6.6
+  - Internet sharing disabled (macOS)
+
+  # CM-7, CM-7(1), SC-7 | HIPAA § 164.312(e)(1) | SOC 2 CC6.6
+  - Printer sharing disabled (macOS)
+
+  # CM-7, SC-7, AU-2 | HIPAA § 164.312(e)(1) | SOC 2 CC6.6, CC6.7
+  - Content caching disabled (macOS)
+
+  # --- System Integrity --------------------------------------------
+
+  # SI-7, SI-7(6), SC-39 | HIPAA § 164.312(c)(1) | SOC 2 CC6.8
+  - System Integrity Protection enabled (macOS)
+
+  # SI-7, CM-7, CM-11 | HIPAA § 164.312(c)(1) | SOC 2 CC6.8
+  - Gatekeeper enabled (macOS)
+
+  # --- Patching ----------------------------------------------------
+
+  # SI-2, SI-2(2), CM-6 | HIPAA § 164.308(a)(5)(ii)(B) | SOC 2 CC7.1
+  - Automatic updates enabled (macOS)
+
+  # SI-2, RA-5, CM-6 | HIPAA § 164.308(a)(5)(ii)(B) | SOC 2 CC7.1
+  - OS up to date
+
+  # --- Access Control & Authentication -----------------------------
+
+  # AC-2, IA-2, AC-3 | HIPAA § 164.312(a)(1) | SOC 2 CC6.1
+  - Guest account disabled (macOS)
+
+  # AC-6, AC-6(5), AC-2 | HIPAA § 164.312(a)(1) | SOC 2 CC6.3
+  - No unauthorized local admin accounts (macOS)
+
+  # AC-11, AC-11(1), IA-11 | HIPAA § 164.312(a)(2)(iii) | SOC 2 CC6.1
+  - Screen lock enabled (macOS)
+
+  # AC-11, IA-11 | HIPAA § 164.312(d) | SOC 2 CC6.1
+  - Password required after lock (macOS)
+
+  # IA-5, IA-5(1), AC-2 | HIPAA § 164.308(a)(5)(ii)(D) | SOC 2 CC6.1
+  - Password complexity enforced (macOS)
+
+  # IA-2, IA-5, AC-2, AC-11 | HIPAA § 164.312(d) | SOC 2 CC6.1, CC6.2
+  - Login window shows name and password fields (macOS)
+
+  # --- Audit & Logging ---------------------------------------------
+
+  # AU-2, AU-3, AU-12 | HIPAA § 164.312(b) | SOC 2 CC7.3
+  - Audit logging enabled (macOS)
+
+  # AU-8, AU-8(1), AU-8(2) | HIPAA § 164.312(b) | SOC 2 CC7.2, CC7.3 | ISO A.8.17
+  # Required for FedRAMP High (AU-8(1) is a High baseline control)
+  - NTP time synchronisation configured (macOS)

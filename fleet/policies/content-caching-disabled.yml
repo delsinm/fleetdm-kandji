@@ -1,0 +1,105 @@
+---
+# content-caching-disabled.yml
+# FleetDM Policy: Content caching disabled
+#
+# Verifies that macOS Content Caching is disabled. Content Caching allows
+# an endpoint to act as a local Apple content distribution node, caching
+# software updates, App Store content, and iCloud data for other Apple
+# devices on the network. This turns the endpoint into a network service
+# that stores and redistributes Apple content on behalf of other devices,
+# creating unmonitored network traffic and storage activity.
+#
+# On managed endpoints this is a non-essential service that:
+#   - Opens inbound network listeners for peer devices
+#   - Stores potentially large volumes of cached content on the disk
+#   - Relays traffic between Apple servers and other network devices
+#   - Creates network activity that may be difficult to monitor or attribute
+#
+# Compliance mapping
+# ------------------
+# FedRAMP / NIST 800-53:
+#   CM-7      Least Functionality -- content caching is a non-essential
+#             service. Managed endpoints should not act as content
+#             distribution infrastructure without explicit authorisation.
+#   CM-7(1)   Periodic Review -- content caching is a commonly overlooked
+#             background service that may have been enabled inadvertently
+#             or by a previous user.
+#   SC-7      Boundary Protection -- content caching opens inbound network
+#             listeners and creates network relay behaviour that bypasses
+#             standard endpoint traffic monitoring.
+#   AU-2      Audit Events -- caching activity generates network and storage
+#             events that are not captured by standard endpoint audit logging,
+#             creating audit gaps.
+#
+# HIPAA:
+#   § 164.312(e)(1)  Transmission Security -- content caching relays
+#                   network traffic through the endpoint, creating
+#                   transmission paths that are not monitored or controlled
+#                   by organisational security infrastructure.
+#   § 164.306(a)(1)  Confidentiality, Integrity, Availability -- storing
+#                   and relaying content through managed endpoints creates
+#                   uncontrolled data flows that represent a confidentiality
+#                   risk.
+#
+# SOC 2:
+#   CC6.6  Logical access security against external threats -- content
+#          caching opens the endpoint as a network service accessible to
+#          other local devices, expanding the external threat surface.
+#   CC6.7  Restricts transmission of confidential information -- content
+#          caching creates unmonitored relay paths for network content
+#          that may include confidential data.
+#   CC7.2  Monitors system components for anomalies -- caching activity
+#          creates background network and disk activity that may obscure
+#          anomalous behaviour in monitoring tools.
+#
+#
+# ISO 27001:2022:
+#   A.8.20  Networks Security -- content caching opens inbound listeners
+#           and creates relay behaviour that bypasses standard network
+#           monitoring, violating network security requirements.
+#   A.8.9   Configuration Management -- disabling content caching is part
+#           of the hardened baseline configuration for managed endpoints.
+# Resolution
+# ----------
+# Disable content caching via Kandji configuration profile or:
+#   System Settings > General > Sharing > Content Caching (ensure off)
+# Or via command line:
+#   sudo AssetCacheManagerUtil deactivate
+# Verify with: AssetCacheManagerUtil status (should show "Activated: false")
+
+# Kandji enforcement
+# ------------------
+# Type:          Custom script (remediation)
+# Script:        Disable content caching
+# Assignment:    All blueprints
+# Verify:        Kandji → Library → Custom Scripts → Content Caching Disable assigned
+#
+# Create a Kandji custom script library item:
+#   #!/bin/bash
+#   AssetCacheManagerUtil deactivate 2>/dev/null || true
+#
+# Set execution frequency to "Run periodically" (daily recommended).
+# Verify deactivation with: AssetCacheManagerUtil status
+# Expected output includes "Activated: false"
+apiVersion: v1
+kind: policy
+spec:
+  name: Content caching disabled (macOS)
+  description: >
+    Checks that macOS Content Caching is disabled, preventing the endpoint
+    from acting as an Apple content distribution relay for other devices.
+    Content caching opens inbound listeners and creates unmonitored network
+    relay behaviour. Satisfies CM-7 (Least Functionality), SC-7 (Boundary
+    Protection), HIPAA § 164.312(e)(1) (Transmission Security), and
+    SOC 2 CC6.6 and CC6.7.
+  query: >
+    SELECT 1 FROM sharing_preferences
+    WHERE content_caching = 0;
+  resolution: >
+    Disable content caching via System Settings > General > Sharing >
+    Content Caching (ensure off), or run:
+    sudo AssetCacheManagerUtil deactivate
+    Verify: AssetCacheManagerUtil status (expected: "Activated: false").
+    Deploy via Kandji custom script for fleet-wide enforcement.
+  platform: darwin
+  critical: false

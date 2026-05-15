@@ -1,0 +1,73 @@
+---
+# screen-lock.yml
+# FleetDM Policy: Screen lock / idle timeout
+#
+# Verifies that the macOS screensaver idle timeout is configured to 5 minutes
+# (300 seconds) or less via a managed preference. A manually set timeout is
+# not sufficient -- it must be enforced through Kandji or another MDM profile
+# so users cannot override it.
+#
+# Compliance mapping
+# ------------------
+# FedRAMP / NIST 800-53:
+#   AC-11     Session Lock -- requires session lock after inactivity
+#   AC-11(1)  Pattern-Hiding Displays -- screensaver satisfies this enhancement
+#
+# HIPAA:
+#   § 164.312(a)(2)(iii)  Automatic Logoff -- automatic session termination
+#                         after inactivity. Screen lock with password satisfies.
+#
+# SOC 2:
+#   CC6.1  Logical and physical access controls -- restricts access to
+#          authorised users; screen lock prevents unauthorised physical access.
+#   CC6.8  Prevents or detects unauthorised software -- session lock reduces
+#          exposure window for physical access attacks.
+#
+#
+# ISO 27001:2022:
+#   A.8.1   User Endpoint Devices -- requires that a clear screen policy
+#           be adopted for user endpoint devices, including automatic
+#           locking after a period of inactivity.
+#   A.8.5   Secure Authentication -- session lock with re-authentication
+#           is an authentication control requiring users to re-identify
+#           themselves after inactivity.
+# Resolution
+# ----------
+# Deploy a Kandji configuration profile enforcing com.apple.screensaver idleTime
+# to 300 seconds or less. The setting must be managed (not user-configurable).
+# Verify the profile is assigned to all blueprints and that the device has
+# checked in since the profile was pushed.
+
+# Kandji enforcement
+# ------------------
+# Type:          Configuration profile
+# Profile:       Custom profile — deploy com.apple.screensaver payload
+# Assignment:    All blueprints
+# Verify:        Kandji → Library → Custom Profiles → Screensaver profile assigned
+#
+# Create a custom macOS configuration profile with the com.apple.screensaver
+# payload setting idleTime to 300 (5 minutes) or less. Set username to empty
+# string to apply as a device-level managed preference. This prevents users
+# from overriding the timeout. Combine with password-required-after-lock
+# settings in the same profile.
+apiVersion: v1
+kind: policy
+spec:
+  name: Screen lock enabled (macOS)
+  description: >
+    Checks that the macOS screensaver idle timeout is set to 5 minutes (300 seconds)
+    or less via a managed policy profile. Satisfies AC-11 (Session Lock),
+    HIPAA § 164.312(a)(2)(iii) (Automatic Logoff), and SOC 2 CC6.1.
+  query: >
+    SELECT 1 FROM managed_policies
+    WHERE domain = 'com.apple.screensaver'
+      AND name = 'idleTime'
+      AND CAST(value AS INTEGER) <= 300
+      AND username = '';
+  resolution: >
+    Deploy a Kandji configuration profile enforcing com.apple.screensaver idleTime
+    to 300 seconds or less. The setting must be managed (not user-configurable).
+    Verify the profile is assigned to all applicable blueprints and that the
+    device has checked in since the profile was pushed.
+  platform: darwin
+  critical: true

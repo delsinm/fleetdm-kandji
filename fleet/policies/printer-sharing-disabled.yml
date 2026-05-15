@@ -1,0 +1,90 @@
+---
+# printer-sharing-disabled.yml
+# FleetDM Policy: Printer sharing disabled
+#
+# Verifies that macOS Printer Sharing is disabled. When enabled, Printer
+# Sharing exposes locally connected printers to other devices on the network
+# via IPP (Internet Printing Protocol) and Bonjour. This is an unnecessary
+# network service on managed endpoints that increases attack surface and
+# may expose the device to exploitation via print service vulnerabilities.
+#
+# Compliance mapping
+# ------------------
+# FedRAMP / NIST 800-53:
+#   CM-7      Least Functionality -- printer sharing is a non-essential
+#             network service on managed endpoints. The principle of least
+#             functionality requires disabling services not required for
+#             the device's operational role.
+#   CM-7(1)   Periodic Review -- unnecessary network services should be
+#             identified and disabled as part of periodic configuration
+#             review. Printer sharing is a commonly overlooked service.
+#   SC-7      Boundary Protection -- printer sharing opens an inbound
+#             network listener (IPP on port 631) that represents an
+#             additional attack surface on the endpoint.
+#
+# HIPAA:
+#   § 164.312(e)(1)  Transmission Security -- printer sharing exposes a
+#                   network service that could be targeted to gain access
+#                   to the endpoint and data accessible from it.
+#   § 164.306(a)(2)  Protect Against Reasonably Anticipated Threats --
+#                   unnecessary network services represent a reasonably
+#                   anticipated threat surface that must be minimised.
+#
+# SOC 2:
+#   CC6.6  Logical access security against external threats -- printer
+#          sharing opens a network listener that represents an external
+#          threat surface. Disabling reduces the endpoint attack surface
+#          consistent with least functionality principles.
+#   CC6.1  Logical access controls -- printer sharing allows other network
+#          devices to interact with the endpoint without authentication,
+#          weakening access controls.
+#
+#
+# ISO 27001:2022:
+#   A.8.20  Networks Security -- printer sharing opens an unnecessary inbound
+#           network listener (IPP port 631). Disabling reduces the endpoint
+#           network attack surface per least functionality requirements.
+#   A.8.9   Configuration Management -- disabling printer sharing is part
+#           of the approved baseline configuration for managed endpoints.
+# Resolution
+# ----------
+# Disable printer sharing via Kandji configuration profile or:
+#   System Settings > General > Sharing > Printer Sharing (ensure off)
+# Verify with osquery: SELECT * FROM sharing_preferences WHERE printer_sharing = 1;
+# (should return no rows if disabled)
+
+# Kandji enforcement
+# ------------------
+# Type:          Custom script (remediation)
+# Script:        Disable printer sharing
+# Assignment:    All blueprints
+# Verify:        Kandji → Library → Custom Scripts → Printer Sharing Disable assigned
+#
+# Create a Kandji custom script library item:
+#   #!/bin/bash
+#   cupsctl --no-share-printers
+#
+# Set execution frequency to "Run periodically" (daily recommended).
+# Printer sharing is controlled by CUPS — the cupsctl command is the
+# reliable way to disable it rather than launchctl.
+apiVersion: v1
+kind: policy
+spec:
+  name: Printer sharing disabled (macOS)
+  description: >
+    Checks that macOS Printer Sharing is disabled, removing an unnecessary
+    inbound network listener (IPP port 631) from the endpoint. Satisfies
+    CM-7 (Least Functionality), CM-7(1) (Periodic Review), SC-7 (Boundary
+    Protection), HIPAA § 164.312(e)(1) (Transmission Security), and
+    SOC 2 CC6.6.
+  query: >
+    SELECT 1 FROM sharing_preferences
+    WHERE printer_sharing = 0;
+  resolution: >
+    Disable printer sharing via System Settings > General > Sharing >
+    Printer Sharing (ensure off). Verify:
+    SELECT * FROM sharing_preferences WHERE printer_sharing = 1;
+    should return no rows. Deploy via Kandji custom script if enforcement
+    is required across the fleet.
+  platform: darwin
+  critical: false

@@ -1,0 +1,112 @@
+---
+# crowdstrike-version.yml
+# FleetDM Policy: CrowdStrike Falcon version current
+#
+# Verifies that the installed CrowdStrike Falcon agent meets the minimum
+# required version threshold. crowdstrike-running.yml confirms the agent
+# is running -- this policy confirms it is running a current, supported
+# version with up-to-date detection capabilities.
+#
+# This policy is one of three equivalent EDR version policies. Use the one
+# that matches your organisation's deployed EDR solution:
+#   crowdstrike-version.yml             -- CrowdStrike Falcon
+#   cisco-secure-endpoint-version.yml   -- Cisco Secure Endpoint
+#   sentinelone-version.yml             -- SentinelOne
+#
+# Together with crowdstrike-running.yml these two policies form a complete
+# SI-3 control pair:
+#   crowdstrike-running.yml   -- agent is present and running (availability)
+#   crowdstrike-version.yml   -- agent is current (effectiveness)
+#
+# Version threshold
+# -----------------
+# Update the version in the query below when CrowdStrike releases a new
+# required minimum. Check the CrowdStrike console under:
+#   Host Management → Sensor versions → recommended minimum
+# Treat this as a living configuration -- review quarterly or after any
+# major Falcon release.
+#
+# Current minimum: 7.10 (update as needed)
+#
+# Compliance mapping
+# ------------------
+# FedRAMP / NIST 800-53:
+#   SI-3      Malware Protection -- requires malware protection mechanisms
+#             to be updated when new releases are available. An outdated
+#             agent may lack detection signatures for recent threats.
+#   SI-3(1)   Central Management -- CrowdStrike console provides central
+#             management; this policy verifies the agent version aligns
+#             with centrally managed update policy.
+#   SI-2      Flaw Remediation -- outdated agent versions may contain known
+#             vulnerabilities in the agent software itself.
+#   SI-3(2)   Automatic Updates -- Falcon auto-updates from CrowdStrike cloud.
+#             Verify auto-update is enabled in your sensor update policy.
+#
+# HIPAA:
+#   § 164.308(a)(5)(ii)(B)  Protection from Malicious Software -- requires
+#                           keeping protection software current. An outdated
+#                           Falcon agent may miss recent malware variants.
+#   § 164.306(a)(1)         Risk Analysis -- running an outdated AV/EDR agent
+#                           is a known, preventable risk.
+#
+# SOC 2:
+#   CC6.8  Prevents or detects unauthorised software -- an outdated EDR agent
+#          may miss recent malware variants, weakening this control.
+#   CC7.2  Monitors system components for anomalies -- agent effectiveness
+#          depends on running a current, supported version.
+#
+# ISO 27001:2022:
+#   A.8.7   Protection Against Malware -- malware protection mechanisms must
+#           be kept current. An outdated Falcon agent may lack detection
+#           capability for recent threats, weakening this control.
+#   A.8.8   Management of Technical Vulnerabilities -- outdated agent software
+#           may contain known vulnerabilities that must be remediated.
+#
+# Kandji enforcement
+# ------------------
+# Type:          Library item (same item as crowdstrike-running.yml)
+# Item:          CrowdStrike Falcon
+# Assignment:    All blueprints
+# Verify:        CrowdStrike console → Host Management → Update Policy
+#                Ensure auto-update is enabled for all device groups
+#
+# Kandji installs CrowdStrike but version enforcement is managed by
+# CrowdStrike's own update policy, not Kandji directly. Ensure the
+# CrowdStrike update policy permits auto-update for all endpoints.
+# Update the version threshold in this policy file quarterly.
+#
+# Resolution
+# ----------
+# CrowdStrike Falcon auto-updates in most configurations. If a device is
+# running an outdated version:
+#   1. Verify the device is online and can reach CrowdStrike cloud
+#   2. Check the CrowdStrike console for update policy assignment
+#   3. Confirm the device's update policy allows auto-update
+#   4. For persistent failures, re-enroll or reinstall the Falcon sensor
+#      via the Kandji CrowdStrike library item
+#   5. Update the version threshold in this file after verifying the new
+#      minimum in the CrowdStrike console
+
+apiVersion: v1
+kind: policy
+spec:
+  name: CrowdStrike version current (macOS)
+  description: >
+    Checks that the installed CrowdStrike Falcon agent meets the minimum required
+    version (7.10). Complements the CrowdStrike running policy by verifying agent
+    effectiveness, not just presence. Satisfies SI-3 (Malware Protection), HIPAA
+    § 164.308(a)(5)(ii)(B) (Protection from Malicious Software), SOC 2 CC6.8,
+    and ISO 27001:2022 A.8.7. Update the version threshold quarterly or after
+    major Falcon releases.
+  query: >
+    SELECT 1 FROM apps
+    WHERE name = 'Falcon.app'
+      AND bundle_short_version >= '7.10';
+  resolution: >
+    CrowdStrike Falcon auto-updates in most configurations. Check the CrowdStrike
+    console to verify the device is assigned to an update policy that permits
+    auto-update. If the device is on an old version, verify it can reach
+    CrowdStrike cloud endpoints. For persistent failures, reinstall the Falcon
+    sensor via the Kandji CrowdStrike library item.
+  platform: darwin
+  critical: true

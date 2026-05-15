@@ -1,0 +1,103 @@
+---
+# ssh-disabled.yml
+# FleetDM Policy: SSH remote login disabled
+#
+# Verifies that SSH remote login (Remote Login sharing preference) is disabled
+# on endpoint devices. SSH provides an authenticated remote shell -- on managed
+# endpoints this is an unnecessary attack surface. Administrative access should
+# occur via MDM (Kandji) and approved remote support tools, not SSH.
+#
+# Exceptions: this policy is appropriate for endpoint devices (laptops,
+# workstations). Server infrastructure managed by Fleet should have a separate
+# team policy with SSH enabled and hardened rather than disabled.
+#
+# Compliance mapping
+# ------------------
+# FedRAMP / NIST 800-53:
+#   CM-7      Least Functionality -- requires disabling functions, ports,
+#             protocols, and services not required for operation. SSH is not
+#             required on managed endpoints and represents an unnecessary
+#             attack surface.
+#   CM-7(1)   Periodic Review -- unnecessary services should be identified
+#             and disabled. SSH on endpoints falls into this category.
+#   AC-17     Remote Access -- requires authorisation, monitoring, and control
+#             of all remote access methods. Disabling SSH eliminates an
+#             unmonitored remote access vector on endpoints.
+#   AC-17(1)  Automated Monitoring -- if SSH cannot be disabled, automated
+#             monitoring of SSH sessions would be required. Disabling is simpler.
+#   SC-7      Boundary Protection -- disabling SSH reduces the endpoint's
+#             inbound network attack surface.
+#
+# HIPAA:
+#   § 164.312(e)(1)  Transmission Security -- requires technical security
+#                   measures to guard against unauthorised access to ePHI
+#                   transmitted over networks. An open SSH port represents
+#                   a potential unauthorised inbound access vector.
+#   § 164.312(a)(1)  Access Control -- SSH provides a remote access path that
+#                   must be controlled. Disabling it removes the risk entirely
+#                   for devices that do not require remote shell access.
+#   § 164.306(a)(2)  Protect Against Reasonably Anticipated Threats -- open
+#                   SSH on endpoints is a well-known attack vector and a
+#                   reasonably anticipated threat that must be addressed.
+#
+# SOC 2:
+#   CC6.2  Prior to issuing system credentials -- SSH access represents a
+#          credential-based remote access path that must be formally
+#          authorised. Disabling eliminates the need to manage this.
+#   CC6.6  Logical access security against external threats -- open SSH
+#          ports on endpoints represent an external threat vector that
+#          should be eliminated where not required.
+#   CC6.8  Prevents unauthorised software/access -- disabling SSH prevents
+#          unauthorised remote access attempts via this protocol.
+#
+#
+# ISO 27001:2022:
+#   A.8.20  Networks Security -- unnecessary network services must be
+#           disabled. SSH on managed endpoints is a non-essential inbound
+#           service that increases network attack surface.
+#   A.8.9   Configuration Management -- disabling SSH is part of the
+#           hardened baseline configuration for managed endpoints.
+# Resolution
+# ----------
+# Disable SSH via Kandji configuration profile or command:
+#   sudo systemsetup -setremotelogin off
+# Verify with: sudo systemsetup -getremotelogin
+# Expected output: "Remote Login: Off"
+# Alternatively deploy via Kandji privacy preferences or custom script.
+
+# Kandji enforcement
+# ------------------
+# Type:          Custom script (remediation)
+# Script:        Disable SSH remote login
+# Assignment:    All blueprints
+# Verify:        Kandji → Library → Custom Scripts → SSH Disable script assigned
+#
+# Create a Kandji custom script library item with the following:
+#   #!/bin/bash
+#   sudo systemsetup -setremotelogin off
+#
+# Set execution frequency to "Run periodically" (daily recommended) so
+# Kandji re-enforces it even if a user re-enables SSH manually.
+# SSH cannot be disabled via a standard configuration profile.
+apiVersion: v1
+kind: policy
+spec:
+  name: SSH remote login disabled (macOS)
+  description: >
+    Checks that SSH remote login is disabled on endpoint devices. SSH is an
+    unnecessary attack surface on managed endpoints where MDM handles remote
+    administration. Satisfies CM-7 (Least Functionality), AC-17 (Remote Access),
+    HIPAA § 164.312(e)(1) (Transmission Security), and SOC 2 CC6.6. Apply to
+    endpoint team only -- server infrastructure requires separate handling.
+  query: >
+    SELECT 1 FROM sharing_preferences
+    WHERE remote_login = 0;
+  resolution: >
+    Disable SSH via Kandji custom script or command:
+    sudo systemsetup -setremotelogin off
+    Verify: sudo systemsetup -getremotelogin
+    Expected: "Remote Login: Off"
+    If SSH is legitimately required for a specific role, move the device to
+    a separate Fleet team with an exemption policy and compensating controls.
+  platform: darwin
+  critical: true

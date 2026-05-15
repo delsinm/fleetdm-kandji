@@ -1,0 +1,104 @@
+---
+# remote-management-disabled.yml
+# FleetDM Policy: Remote management (ARD) disabled
+#
+# Verifies that Apple Remote Desktop (ARD) management is disabled. ARD provides
+# remote administration capabilities beyond screen sharing -- including remote
+# command execution, file transfer, and system reporting. It operates on a
+# separate port (TCP 3283) from VNC and represents an additional remote access
+# and management surface that should be disabled on endpoints managed via MDM.
+#
+# Note: this is distinct from MDM management (Kandji). Kandji uses the Apple
+# MDM protocol over HTTPS/APNs, not ARD. Disabling ARD does not affect Kandji
+# management. ARD is legacy remote administration tooling that is superseded
+# by MDM for managed fleets.
+#
+# Compliance mapping
+# ------------------
+# FedRAMP / NIST 800-53:
+#   CM-7      Least Functionality -- ARD is a non-essential legacy service on
+#             MDM-managed endpoints. Disabling reduces attack surface and aligns
+#             with least functionality requirements.
+#   AC-17     Remote Access -- ARD provides remote command execution capability
+#             that must be explicitly authorised and monitored. MDM supersedes
+#             this need on managed endpoints.
+#   CM-7(2)   Prevent Program Execution -- ARD allows remote script execution,
+#             which must be controlled. Disabling eliminates this vector.
+#   MA-4      Non-Local Maintenance -- remote maintenance activities must be
+#             authorised and monitored. ARD is a non-local maintenance tool
+#             that should be replaced by MDM-based maintenance workflows.
+#
+# HIPAA:
+#   § 164.312(e)(1)  Transmission Security -- ARD transmits management commands
+#                   and potentially data over the network. Disabling eliminates
+#                   this uncontrolled transmission path.
+#   § 164.312(a)(1)  Access Control -- ARD remote execution capability can be
+#                   used to access or exfiltrate ePHI. Must be disabled where
+#                   not explicitly required and controlled.
+#   § 164.308(a)(3)  Workforce Access Management -- ARD access must align with
+#                   workforce roles. On standard endpoints, no role requires ARD.
+#
+# SOC 2:
+#   CC6.6  Logical access security against external threats -- ARD represents
+#          a legacy remote access and execution vector. Disabling eliminates
+#          an external threat surface not covered by modern MDM controls.
+#   CC6.1  Logical access controls -- ARD access is difficult to integrate
+#          with standard IAM and audit controls. MDM-based management is
+#          the preferred controlled alternative.
+#   CC8.1  Change management controls -- ARD remote execution bypasses change
+#          management workflows. Disabling enforces changes occur through
+#          approved MDM channels.
+#
+#
+# ISO 27001:2022:
+#   A.8.20  Networks Security -- Apple Remote Desktop is a legacy remote
+#           administration service superseded by MDM. Disabling removes
+#           an unnecessary inbound network attack surface.
+#   A.8.9   Configuration Management -- disabling ARD enforces that
+#           configuration changes occur through approved MDM channels,
+#           supporting configuration management requirements.
+# Resolution
+# ----------
+# Disable ARD via Kandji custom script:
+#   sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
+#     -deactivate -stop
+# Verify with: sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/\
+#   Contents/Resources/kickstart -activate -configure -access -off
+# Or check: ps aux | grep ARDAgent (should not be running as a server process)
+
+# Kandji enforcement
+# ------------------
+# Type:          Custom script (remediation)
+# Script:        Disable Apple Remote Desktop (ARD)
+# Assignment:    All blueprints
+# Verify:        Kandji → Library → Custom Scripts → ARD Disable script assigned
+#
+# Create a Kandji custom script library item:
+#   #!/bin/bash
+#   /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
+#     -deactivate -stop 2>/dev/null || true
+#
+# Note: this disables ARD remote administration only. It does not affect
+# Kandji MDM management, which operates via Apple MDM protocol over HTTPS.
+# Set execution frequency to "Run periodically" (daily recommended).
+apiVersion: v1
+kind: policy
+spec:
+  name: Remote management disabled (macOS)
+  description: >
+    Checks that Apple Remote Desktop (ARD) management is disabled. ARD provides
+    legacy remote administration including command execution and file transfer,
+    superseded by MDM for managed fleets. Disabling does not affect Kandji MDM.
+    Satisfies CM-7 (Least Functionality), AC-17 (Remote Access), HIPAA
+    § 164.312(e)(1) (Transmission Security), and SOC 2 CC6.6 and CC8.1.
+  query: >
+    SELECT 1 FROM sharing_preferences
+    WHERE remote_management = 0;
+  resolution: >
+    Disable Apple Remote Desktop via Kandji custom script:
+    sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/
+    Resources/kickstart -deactivate -stop
+    This does not affect Kandji MDM management. Verify ARDAgent is not running
+    as a server: ps aux | grep ARDAgent. Re-push Kandji profile if needed.
+  platform: darwin
+  critical: false

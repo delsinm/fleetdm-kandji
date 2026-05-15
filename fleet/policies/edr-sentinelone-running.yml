@@ -1,0 +1,142 @@
+---
+# sentinelone-running.yml
+# FleetDM Policy: SentinelOne agent running
+#
+# Verifies that the SentinelOne endpoint protection agent is actively running
+# on the device. SentinelOne is an AI-driven EDR/EPP platform that provides
+# autonomous threat detection, prevention, and response. It is a widely adopted
+# enterprise alternative to CrowdStrike Falcon and Cisco Secure Endpoint.
+#
+# This policy is one of three equivalent EDR running policies. Use the one
+# that matches your organisation's deployed EDR solution:
+#   crowdstrike-running.yml             -- CrowdStrike Falcon
+#   cisco-secure-endpoint-running.yml   -- Cisco Secure Endpoint
+#   sentinelone-running.yml             -- SentinelOne
+#
+# Do not enable more than one EDR running policy simultaneously unless you
+# are intentionally running a dual-EDR configuration, which is uncommon
+# and may cause performance issues on endpoints.
+#
+# Agent process: sentineld (SentinelOne daemon)
+# Install path:  /Library/Sentinel/sentinel-agent.bundle/
+# Console:       your-tenant.sentinelone.net
+# FedRAMP:       SentinelOne FedRAMP authorization is in progress as of 2024.
+#                Verify current authorization status before use in FedRAMP envs.
+#
+# Together with sentinelone-version.yml these two policies form a complete
+# SI-3 control pair:
+#   sentinelone-running.yml   -- agent is present and running (availability)
+#   sentinelone-version.yml   -- agent is current (effectiveness)
+#
+# Compliance mapping
+# ------------------
+# FedRAMP / NIST 800-53:
+#   SI-3      Malware Protection -- requires malware protection mechanisms
+#             to be employed at workstations and entry/exit points. SentinelOne
+#             provides autonomous AI-driven malware detection and prevention
+#             as the primary endpoint protection control.
+#   SI-3(1)   Central Management -- SentinelOne management console provides
+#             central visibility, policy enforcement, and threat response
+#             across all enrolled endpoints.
+#   SI-3(2)   Automatic Updates -- SentinelOne automatically updates its
+#             AI models and detection capabilities from the cloud.
+#   SI-4      Information System Monitoring -- SentinelOne's EDR capability
+#             provides continuous behavioural monitoring and autonomous
+#             threat response at the endpoint level.
+#
+# HIPAA:
+#   § 164.308(a)(5)(ii)(B)  Protection from Malicious Software -- requires
+#                           procedures for guarding against malicious software.
+#                           SentinelOne provides real-time AI-driven malware
+#                           detection, prevention, and autonomous remediation.
+#   § 164.306(a)(1)         Confidentiality, Integrity, Availability -- malware
+#                           on an endpoint represents a direct risk to all three
+#                           pillars of the Security Rule.
+#   § 164.312(b)            Audit Controls -- SentinelOne's event telemetry
+#                           contributes to audit trail requirements by recording
+#                           process, file, and network activity events.
+#
+# SOC 2:
+#   CC6.8  Prevents or detects unauthorised software -- SentinelOne is the
+#          primary control satisfying this criteria for endpoint malware
+#          detection and autonomous prevention in SentinelOne environments.
+#   CC7.2  Monitors system components for anomalies -- SentinelOne's AI
+#          engine continuously monitors endpoint behaviour for anomalous
+#          patterns and automatically responds to threats.
+#   CC7.3  Evaluates security events -- SentinelOne alerts and storylines
+#          feed into the security event evaluation and response process.
+#
+# ISO 27001:2022:
+#   A.8.7   Protection Against Malware -- requires controls against malware
+#           to be implemented. SentinelOne is the primary technical control
+#           satisfying this requirement in SentinelOne environments.
+#   A.8.16  Monitoring Activities -- SentinelOne provides continuous endpoint
+#           behavioural monitoring and autonomous threat response required
+#           by this control.
+#
+# Kandji enforcement
+# ------------------
+# Type:          Custom package / library item
+# Item:          SentinelOne agent installer pkg
+# Assignment:    All blueprints
+# Verify:        Kandji → Library → Custom Apps → SentinelOne assigned
+#
+# SentinelOne does not have a native Kandji library item. Deploy via
+# Kandji Custom App using the installer package downloaded from your
+# SentinelOne management console:
+#   your-tenant.sentinelone.net → Sentinels → Packages → macOS → Download
+#
+# The installer package includes your site token baked in. Upload to
+# Kandji → Library → Custom Apps and assign to all blueprints.
+#
+# If this policy fails repeatedly despite blankpushes, verify:
+#   1. The SentinelOne pkg is assigned in the device's blueprint
+#   2. The device can reach SentinelOne cloud endpoints
+#   3. SentinelOne System Extensions are approved in the blueprint
+#      (required for Full Disk Access and network filtering on macOS)
+#   4. Check agent status: sudo sentinelctl status
+#
+# Note on macOS System Extensions
+# --------------------------------
+# SentinelOne requires System Extension approval and Full Disk Access on
+# macOS. These must be pre-approved via an MDM configuration profile or
+# Kandji will prompt users to manually approve them, which delays protection.
+# Deploy a Kandji custom profile granting:
+#   - System Extension: com.sentinel.helper (Team ID: 4AYE5J54KN)
+#   - Privacy Preferences Policy Control (PPPC): Full Disk Access
+#
+# Resolution
+# ----------
+# If SentinelOne is not running:
+#   1. Check if installed: ls /Library/Sentinel/
+#   2. Check agent status: sudo sentinelctl status
+#   3. Attempt restart: sudo sentinelctl restart-agent
+#   4. If not installed, re-deploy via Kandji Custom App library item
+#   5. Verify System Extension and Full Disk Access approvals in Kandji
+#   6. Check connectivity to SentinelOne cloud in the management console
+
+apiVersion: v1
+kind: policy
+spec:
+  name: SentinelOne running (macOS)
+  description: >
+    Checks that the SentinelOne endpoint protection agent (sentineld) is actively
+    running. Primary endpoint malware protection and EDR control for SentinelOne
+    environments. Use this policy instead of crowdstrike-running.yml for
+    SentinelOne deployments. Satisfies SI-3 (Malware Protection), SI-3(1)
+    (Central Management), HIPAA § 164.308(a)(5)(ii)(B) (Protection from Malicious
+    Software), SOC 2 CC6.8, and ISO 27001:2022 A.8.7. Pair with
+    sentinelone-version.yml for complete SI-3 coverage. Note: SentinelOne
+    requires System Extension and Full Disk Access approval via MDM profile.
+  query: >
+    SELECT 1 FROM processes
+    WHERE name = 'sentineld';
+  resolution: >
+    Check SentinelOne agent status: sudo sentinelctl status
+    Attempt restart: sudo sentinelctl restart-agent
+    If not installed, re-deploy via the Kandji Custom App library item.
+    Verify System Extension (com.sentinel.helper) and Full Disk Access are
+    approved in the Kandji blueprint profile. Check SentinelOne management
+    console for connectivity or policy issues.
+  platform: darwin
+  critical: true

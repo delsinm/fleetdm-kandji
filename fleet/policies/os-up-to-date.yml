@@ -1,0 +1,123 @@
+---
+# os-up-to-date.yml
+# FleetDM Policy: OS up to date
+#
+# Verifies that the macOS version installed on the endpoint meets the minimum
+# required version threshold. This is the outcome check for patch compliance --
+# it confirms updates have actually been applied, not just that the device is
+# configured to check for them. Pair with auto-updates-enabled.yml to also
+# verify the mechanism that delivers updates is active.
+#
+# Together these two policies form a complete SI-2 control pair:
+#   auto-updates-enabled.yml  -- device is checking for updates (process)
+#   os-up-to-date.yml         -- device has applied updates (outcome)
+#
+# Version threshold
+# -----------------
+# Update MIN_VERSION below when Apple releases a new required minimum.
+# For FedRAMP environments, align with CISA's Known Exploited Vulnerabilities
+# (KEV) catalog -- any macOS CVE listed there drives an immediate threshold
+# update. For corporate environments, a 30-day grace period after release
+# is reasonable to allow for compatibility testing.
+#
+# Current minimum: 14.0 (Sonoma) -- update as needed
+#
+# Compliance mapping
+# ------------------
+# FedRAMP / NIST 800-53:
+#   SI-2      Flaw Remediation -- requires the organisation to identify,
+#             report, and correct information system flaws, install security-
+#             relevant software updates within organisationally defined
+#             time periods, and test software updates before installation.
+#   SI-2(2)   Automated Flaw Remediation Status -- requires automated
+#             mechanisms to determine the state of flaw remediation. This
+#             policy provides automated compliance verification.
+#   SI-2(3)   Time to Remediate Flaws -- requires time benchmarks for
+#             flaw remediation. Fleet policy failure triggers automated
+#             remediation via Kandji blankpush within the drift check window.
+#   RA-5      Vulnerability Scanning -- patch compliance is a key output
+#             of the vulnerability management process; this policy provides
+#             continuous automated evidence of patch status.
+#   CM-6      Configuration Settings -- current OS version is part of the
+#             approved baseline configuration for all endpoints.
+#
+# HIPAA:
+#   § 164.308(a)(5)(ii)(B)  Protection from Malicious Software -- requires
+#                           procedures to guard against malicious software.
+#                           Unpatched OS vulnerabilities are a primary vector
+#                           for malware that could compromise ePHI.
+#   § 164.308(a)(8)         Evaluation -- requires periodic technical and
+#                           non-technical evaluation of security measures.
+#                           Continuous patch compliance monitoring satisfies
+#                           the technical evaluation requirement.
+#   § 164.306(a)(1)         Risk Analysis -- unpatched systems with known
+#                           CVEs represent a documented, preventable risk
+#                           that must be addressed under the Security Rule.
+#
+# SOC 2:
+#   CC7.1  Detects and monitors for vulnerabilities -- patch compliance
+#          monitoring is a core vulnerability management control and a
+#          primary evidence item for this criteria.
+#   CC9.1  Identifies and assesses risk of business disruption -- known
+#          unpatched vulnerabilities represent a quantifiable risk that
+#          must be tracked and remediated.
+#   CC4.1  Monitors for security breaches -- outdated OS versions are a
+#          leading indicator of increased breach risk.
+#
+#
+# ISO 27001:2022:
+#   A.8.8   Management of Technical Vulnerabilities -- requires that
+#           technical vulnerabilities are identified and remediated in
+#           a timely manner. OS version compliance is the primary outcome
+#           measure of the vulnerability remediation process for endpoints.
+#   A.8.9   Configuration Management -- current OS version is part of
+#           the approved baseline configuration for all managed endpoints.
+# Resolution
+# ----------
+# Deploy OS updates via Kandji's OS Enforcement library item (preferred),
+# which allows setting a maximum deferral period and a hard deadline after
+# which the update is forced. For urgent security patches (KEV-listed CVEs):
+#   1. Update the OS Enforcement policy in Kandji to reduce the deferral window.
+#   2. Issue a blankpush fleet-wide via drift_check.py to force immediate check-in.
+#   3. Monitor compliance in Fleet until all hosts pass.
+# Manual update: System Settings > General > Software Update
+
+# Kandji enforcement
+# ------------------
+# Type:          Library item
+# Item:          OS Enforcement (Kandji → Library → OS Enforcement)
+# Assignment:    All blueprints
+# Verify:        Kandji → Library → OS Enforcement → deferral period and deadline set
+#
+# Kandji's OS Enforcement library item prompts users to update and enforces
+# a hard deadline after which the update is applied automatically. Configure:
+#   - Maximum deferral: 14 days (standard), 7 days (FedRAMP)
+#   - Minimum OS version: match the threshold in this policy file (14.0)
+#
+# When a KEV-listed macOS CVE is published, reduce the deferral window
+# in Kandji and update the version threshold in this policy file together.
+apiVersion: v1
+kind: policy
+spec:
+  name: OS up to date
+  description: >
+    Checks that the macOS version meets the minimum required threshold (14.0).
+    Outcome-based patch compliance check -- pair with the Automatic updates
+    enabled policy for complete SI-2 coverage. Satisfies SI-2 (Flaw
+    Remediation), SI-2(2) (Automated Flaw Remediation Status), HIPAA
+    § 164.308(a)(5)(ii)(B) (Protection from Malicious Software), and
+    SOC 2 CC7.1. Update the version threshold when Apple releases a new
+    required minimum or when a KEV-listed macOS CVE is published.
+  query: >
+    SELECT 1 FROM os_version
+    WHERE platform = 'darwin'
+      AND version >= '14.0.0';
+  resolution: >
+    Deploy the OS update via Kandji's OS Enforcement library item. For urgent
+    patches, reduce the Kandji deferral window and issue a fleet-wide blankpush
+    to force immediate check-in. Monitor Fleet until all hosts pass.
+    Manual update via System Settings > General > Software Update.
+    Update the version threshold in this policy file after verifying the new
+    minimum in the Fleet policy configuration.
+  platform: darwin
+  critical: true

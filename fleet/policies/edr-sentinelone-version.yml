@@ -1,0 +1,127 @@
+---
+# sentinelone-version.yml
+# FleetDM Policy: SentinelOne agent version current
+#
+# Verifies that the installed SentinelOne agent meets the minimum required
+# version threshold. sentinelone-running.yml confirms the agent is running --
+# this policy confirms it is running a current, supported version with
+# up-to-date AI models and detection capabilities.
+#
+# This policy is one of three equivalent EDR version policies. Use the one
+# that matches your organisation's deployed EDR solution:
+#   crowdstrike-version.yml             -- CrowdStrike Falcon
+#   cisco-secure-endpoint-version.yml   -- Cisco Secure Endpoint
+#   sentinelone-version.yml             -- SentinelOne
+#
+# Together with sentinelone-running.yml these two policies form a complete
+# SI-3 control pair:
+#   sentinelone-running.yml   -- agent is present and running (availability)
+#   sentinelone-version.yml   -- agent is current (effectiveness)
+#
+# Version threshold
+# -----------------
+# Update the version in the query below when SentinelOne releases a new
+# required minimum. Check your SentinelOne console under:
+#   Sentinels → Packages → Latest available version
+# SentinelOne releases agent updates frequently -- review monthly rather
+# than quarterly and align with your SentinelOne update policy.
+#
+# Agent versions follow MAJOR.MINOR.PATCH format (e.g. 23.4.1).
+# The query checks bundle_short_version of the SentinelOne app bundle.
+#
+# Current minimum: 23.4 (update as needed -- review monthly)
+#
+# Compliance mapping
+# ------------------
+# FedRAMP / NIST 800-53:
+#   SI-3      Malware Protection -- malware protection mechanisms must be
+#             updated when new releases are available. An outdated SentinelOne
+#             agent may have stale AI models with reduced detection capability.
+#   SI-3(1)   Central Management -- the SentinelOne console manages agent
+#             versions centrally via update groups. This policy verifies
+#             the agent version aligns with the centrally managed update policy.
+#   SI-2      Flaw Remediation -- outdated agent versions may contain known
+#             vulnerabilities in the agent software itself.
+#   SI-3(2)   Automatic Updates -- SentinelOne supports automatic agent updates
+#             via update groups in the console. Verify auto-update is enabled.
+#
+# HIPAA:
+#   § 164.308(a)(5)(ii)(B)  Protection from Malicious Software -- requires
+#                           keeping protection software current. An outdated
+#                           SentinelOne agent may have reduced AI detection
+#                           capability against recent malware variants.
+#   § 164.306(a)(1)         Risk Analysis -- running an outdated EDR agent
+#                           is a known, preventable risk that must be addressed.
+#
+# SOC 2:
+#   CC6.8  Prevents or detects unauthorised software -- an outdated SentinelOne
+#          agent may have stale AI models, weakening malware detection.
+#   CC7.2  Monitors system components for anomalies -- agent effectiveness
+#          depends on running a current version with up-to-date AI models.
+#
+# ISO 27001:2022:
+#   A.8.7   Protection Against Malware -- malware protection mechanisms must
+#           be current. An outdated SentinelOne agent weakens this control.
+#   A.8.8   Management of Technical Vulnerabilities -- outdated agent software
+#           may itself contain known vulnerabilities that must be remediated.
+#
+# Kandji enforcement
+# ------------------
+# Type:          Custom package / library item (same as sentinelone-running.yml)
+# Item:          SentinelOne agent installer pkg
+# Assignment:    All blueprints
+# Verify:        SentinelOne console → Sentinels → Update Groups →
+#                auto-update policy enabled for all groups
+#
+# SentinelOne agent version management is handled via Update Groups in
+# the SentinelOne console, not Kandji. Configure Update Groups to:
+#   1. Enable automatic agent updates
+#   2. Assign all device groups to an update policy
+#   3. Set a maintenance window if needed for controlled rollout
+#
+# SentinelOne releases updates more frequently than CrowdStrike or Cisco.
+# Review and update the version threshold in this file monthly, not quarterly.
+#
+# If a device is persistently on an old version:
+#   1. Verify the device is online and can reach SentinelOne cloud
+#   2. Check Update Group assignment in the SentinelOne console
+#   3. Force an update: sudo sentinelctl upgrade
+#   4. For persistent failures, redeploy the latest pkg via Kandji Custom App
+#
+# Resolution
+# ----------
+# SentinelOne auto-updates via Update Groups in most configurations. If a
+# device is on an outdated version:
+#   1. Verify connectivity to SentinelOne cloud (your-tenant.sentinelone.net)
+#   2. Check Update Group assignment in the SentinelOne console
+#   3. Force an update: sudo sentinelctl upgrade
+#   4. If auto-update is failing, redeploy the latest pkg via Kandji Custom App
+#   5. Update the version threshold in this file after verifying the new
+#      minimum in the SentinelOne console
+
+apiVersion: v1
+kind: policy
+spec:
+  name: SentinelOne version current (macOS)
+  description: >
+    Checks that the installed SentinelOne agent meets the minimum required
+    version (23.4). Complements the SentinelOne running policy by verifying
+    agent effectiveness, not just presence. Use this policy instead of
+    crowdstrike-version.yml for SentinelOne deployments. Satisfies SI-3
+    (Malware Protection), SI-3(1) (Central Management), HIPAA
+    § 164.308(a)(5)(ii)(B) (Protection from Malicious Software), SOC 2 CC6.8,
+    and ISO 27001:2022 A.8.7. Update the version threshold monthly -- SentinelOne
+    releases updates more frequently than other EDR vendors.
+  query: >
+    SELECT 1 FROM apps
+    WHERE name = 'SentinelOne.app'
+      AND bundle_short_version >= '23.4';
+  resolution: >
+    SentinelOne auto-updates via Update Groups in most configurations. Check the
+    SentinelOne console to verify the device is assigned to an Update Group with
+    auto-update enabled. Force an update with: sudo sentinelctl upgrade
+    For persistent failures, redeploy the latest agent pkg via Kandji Custom App.
+    Update the version threshold in this file monthly after verifying the current
+    minimum in the SentinelOne console.
+  platform: darwin
+  critical: true

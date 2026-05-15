@@ -1,0 +1,100 @@
+---
+# audit-logging-enabled.yml
+# FleetDM Policy: Audit logging enabled (macOS BSM)
+#
+# Verifies that the macOS Basic Security Module (BSM) audit daemon (auditd) is
+# running. BSM provides a structured, tamper-evident audit trail of security-
+# relevant events including authentication attempts, privilege escalation,
+# file access, and process execution. It is the primary audit logging mechanism
+# for macOS endpoint compliance.
+#
+# Note: macOS also writes to the unified log (log show), but BSM provides the
+# structured, attributable, tamper-evident record required for compliance audit
+# trails. Both should be active. This policy checks BSM specifically.
+#
+# Compliance mapping
+# ------------------
+# FedRAMP / NIST 800-53:
+#   AU-2      Audit Events -- requires the organisation to determine which
+#             events are auditable. BSM auditd implements this at the OS level.
+#   AU-3      Content of Audit Records -- requires audit records to contain
+#             sufficient information to establish what events occurred, sources,
+#             and outcomes. BSM records include user, time, event type, result.
+#   AU-9      Protection of Audit Information -- BSM writes to protected log
+#             files that require root to modify, supporting log integrity.
+#   AU-12     Audit Record Generation -- requires the system to generate audit
+#             records for auditable events. auditd directly satisfies this.
+#
+# HIPAA:
+#   § 164.312(b)  Audit Controls -- requires hardware, software, and procedural
+#                mechanisms that record and examine activity in information
+#                systems that contain or use ePHI. BSM audit logging is the
+#                primary technical control satisfying this requirement for
+#                macOS endpoints. This is one of the most commonly cited HIPAA
+#                technical safeguard gaps during audits.
+#   § 164.308(a)(1)(ii)(D) Information System Activity Review -- requires
+#                regular review of audit logs. BSM provides the log data
+#                that feeds this review process.
+#
+# SOC 2:
+#   CC7.2  Monitors system components for anomalies -- audit logs are a
+#          primary data source for anomaly detection and investigation.
+#   CC7.3  Evaluates security events -- BSM logs provide the event data
+#          required to evaluate and investigate security incidents.
+#   CC4.1  Monitors for security breaches -- audit logs are essential
+#          evidence for breach detection and forensic investigation.
+#
+#
+# ISO 27001:2022:
+#   A.8.15  Logging -- requires production, storage, and protection of
+#           logs recording user activities, exceptions, faults, and
+#           information security events. BSM audit logging directly
+#           satisfies this control for macOS endpoints.
+#   A.8.16  Monitoring Activities -- audit log data is the primary input
+#           for monitoring activities required to detect anomalous
+#           behaviour and security events.
+# Resolution
+# ----------
+# Enable BSM audit logging via Kandji custom script library item:
+#   sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.auditd.plist
+# Verify with: sudo audit -l (lists active audit flags)
+# Or check process: ps aux | grep auditd
+# Configure audit flags in /etc/security/audit_control to capture
+# authentication, authorization, and file access events at minimum.
+
+# Kandji enforcement
+# ------------------
+# Type:          Custom script (remediation)
+# Script:        Enable BSM audit daemon
+# Assignment:    All blueprints
+# Verify:        Kandji → Library → Custom Scripts → Audit Logging Enable assigned
+#
+# Create a Kandji custom script library item:
+#   #!/bin/bash
+#   launchctl load -w /System/Library/LaunchDaemons/com.apple.auditd.plist 2>/dev/null || true
+#
+# Set execution frequency to "Run periodically" (daily recommended) to ensure
+# auditd stays running. Also configure /etc/security/audit_control to capture
+# the required event classes (lo, ad, fr, fw at minimum) — deploy this file
+# via a Kandji custom profile or file deployment library item.
+apiVersion: v1
+kind: policy
+spec:
+  name: Audit logging enabled (macOS)
+  description: >
+    Checks that the macOS BSM audit daemon (auditd) is running, providing a
+    tamper-evident audit trail of security-relevant events. Satisfies AU-2
+    (Audit Events), AU-12 (Audit Record Generation), HIPAA § 164.312(b)
+    (Audit Controls) -- one of the most commonly cited HIPAA gaps -- and
+    SOC 2 CC7.3 (Evaluates Security Events).
+  query: >
+    SELECT 1 FROM processes
+    WHERE name = 'auditd';
+  resolution: >
+    Enable BSM audit logging via Kandji custom script:
+    sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.auditd.plist
+    Verify with: ps aux | grep auditd
+    Configure audit flags in /etc/security/audit_control to capture
+    authentication (lo), authorization (ad), and file access (fr, fw) events.
+  platform: darwin
+  critical: true

@@ -1,0 +1,96 @@
+---
+# screen-sharing-disabled.yml
+# FleetDM Policy: Screen sharing disabled
+#
+# Verifies that macOS Screen Sharing (VNC-based remote desktop) is disabled.
+# Screen sharing allows remote users to view and control the desktop session,
+# providing full graphical access to the machine and any data visible on screen.
+# On managed endpoints, remote support should occur via approved tools (e.g.
+# CrowdStrike Remote or a corporate remote support solution) rather than
+# the built-in macOS screen sharing service.
+#
+# Compliance mapping
+# ------------------
+# FedRAMP / NIST 800-53:
+#   CM-7      Least Functionality -- screen sharing is a non-essential service
+#             on managed endpoints and should be disabled to reduce attack surface.
+#   AC-17     Remote Access -- screen sharing is a remote access method that
+#             requires authorisation and monitoring. Disabling eliminates an
+#             uncontrolled remote access vector.
+#   SC-7      Boundary Protection -- disabling screen sharing reduces inbound
+#             network exposure on the endpoint.
+#   AC-3      Access Enforcement -- screen sharing bypasses normal session
+#             controls by providing graphical access outside the local session.
+#
+# HIPAA:
+#   § 164.312(e)(1)  Transmission Security -- screen sharing transmits the
+#                   full desktop session over the network. Without encryption
+#                   and strict access controls, this represents a significant
+#                   ePHI transmission risk.
+#   § 164.312(a)(1)  Access Control -- screen sharing provides a remote access
+#                   path to any data visible on screen, including ePHI in open
+#                   applications. Must be disabled or strictly controlled.
+#   § 164.308(a)(5)(ii)(C) Log-in Monitoring -- active screen sharing sessions
+#                   are difficult to monitor and attribute. Disabling eliminates
+#                   this audit gap.
+#
+# SOC 2:
+#   CC6.6  Logical access security against external threats -- screen sharing
+#          represents an external remote access vector that must be controlled.
+#          Disabling is the strongest control where it is not required.
+#   CC6.1  Logical access controls -- screen sharing access is difficult to
+#          enforce through standard IAM controls. Disabling removes the risk.
+#   CC7.3  Evaluates security events -- active screen sharing sessions are
+#          hard to detect and attribute. Disabling eliminates this blind spot.
+#
+#
+# ISO 27001:2022:
+#   A.8.20  Networks Security -- screen sharing opens an inbound network
+#           service that is unnecessary on MDM-managed endpoints and
+#           must be disabled per least functionality requirements.
+#   A.8.3   Information Access Restriction -- screen sharing provides
+#           graphical remote access to information on screen, including
+#           any ePHI or confidential data in open applications.
+# Resolution
+# ----------
+# Disable screen sharing via Kandji configuration profile or command:
+#   sudo launchctl disable system/com.apple.screensharing
+#   sudo launchctl unload -w /System/Library/LaunchDaemons/com.apple.screensharing.plist
+# Verify with: sudo launchctl list | grep screensharing
+# Or via System Settings > General > Sharing > Screen Sharing (ensure off).
+# For approved remote support, use CrowdStrike Remote or an IT-managed tool.
+
+# Kandji enforcement
+# ------------------
+# Type:          Custom script (remediation)
+# Script:        Disable screen sharing
+# Assignment:    All blueprints
+# Verify:        Kandji → Library → Custom Scripts → Screen Sharing Disable assigned
+#
+# Create a Kandji custom script library item:
+#   #!/bin/bash
+#   sudo launchctl disable system/com.apple.screensharing
+#   sudo launchctl unload -w /System/Library/LaunchDaemons/com.apple.screensharing.plist 2>/dev/null || true
+#
+# Set execution frequency to "Run periodically" (daily recommended).
+apiVersion: v1
+kind: policy
+spec:
+  name: Screen sharing disabled (macOS)
+  description: >
+    Checks that macOS Screen Sharing (VNC remote desktop) is disabled. Screen
+    sharing provides full graphical remote access and is difficult to monitor
+    or restrict through standard IAM controls. Satisfies CM-7 (Least
+    Functionality), AC-17 (Remote Access), HIPAA § 164.312(e)(1) (Transmission
+    Security), and SOC 2 CC6.6. Use approved IT remote support tools instead.
+  query: >
+    SELECT 1 FROM sharing_preferences
+    WHERE screen_sharing = 0;
+  resolution: >
+    Disable screen sharing via Kandji custom script:
+    sudo launchctl disable system/com.apple.screensharing
+    Or via System Settings > General > Sharing > Screen Sharing (off).
+    Verify: sudo launchctl list | grep screensharing (should return nothing).
+    For remote support needs, use CrowdStrike Remote or approved IT tooling.
+  platform: darwin
+  critical: true

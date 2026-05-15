@@ -1,0 +1,130 @@
+---
+# ntp-configured.yml
+# FleetDM Policy: NTP (Network Time Protocol) configured via managed policy
+#
+# Verifies that macOS is configured to use a managed NTP time server via a
+# managed preference. Accurate, synchronised time is foundational to security
+# infrastructure -- it is required for:
+#
+#   - Audit log integrity: log timestamps must be accurate and consistent
+#     across all systems so events can be correlated and sequenced correctly.
+#     Skewed clocks break forensic timelines and undermine audit evidence.
+#
+#   - Kerberos authentication: Kerberos (used by many enterprise SSO systems)
+#     requires clocks to be within 5 minutes of each other. Clock drift beyond
+#     this threshold causes authentication failures.
+#
+#   - Certificate validation: TLS certificate validity windows depend on
+#     accurate time. Skewed clocks can cause valid certificates to appear
+#     expired or not-yet-valid, breaking HTTPS connections.
+#
+#   - Compliance evidence: FedRAMP High explicitly requires time synchronisation
+#     under AU-8(1) and NIST SP 800-53 requires timestamps to be authoritative.
+#
+# This policy checks that time synchronisation is enforced via a managed
+# preference (com.apple.timed) rather than relying on a user-configurable
+# setting that could be changed or disabled.
+#
+# Recommended NTP servers
+# -----------------------
+# For FedRAMP environments use NIST or government-operated time servers:
+#   time.nist.gov          NIST Internet Time Service
+#   time-a-g.nist.gov      NIST primary
+#   time-b-g.nist.gov      NIST secondary
+#
+# For corporate environments Apple's default is acceptable:
+#   time.apple.com
+#
+# Compliance mapping
+# ------------------
+# FedRAMP / NIST 800-53:
+#   AU-8      Time Stamps -- requires the information system to use internal
+#             clocks to generate timestamps for audit records and to record
+#             time stamps that can be mapped to UTC or GMT.
+#   AU-8(1)   Synchronisation with Authoritative Time Source -- HIGH baseline
+#             required control. Requires synchronisation with a primary and
+#             secondary authoritative time source. This is a FedRAMP High
+#             specific requirement not present at Moderate.
+#   AU-8(2)   Secondary Authoritative Time Source -- requires a secondary
+#             source in a different geographic or logical location.
+#   AU-3      Content of Audit Records -- accurate timestamps are required
+#             for audit records to be meaningful and legally defensible.
+#
+# HIPAA:
+#   § 164.312(b)  Audit Controls -- audit log timestamps must be accurate
+#                 for logs to satisfy the audit controls requirement. Skewed
+#                 clocks undermine the integrity of audit evidence.
+#   § 164.312(c)(1) Integrity -- accurate time is required to verify the
+#                 sequence and integrity of logged events involving ePHI.
+#
+# SOC 2:
+#   CC7.2  Monitors system components for anomalies -- accurate timestamps
+#          are required for meaningful security event correlation and anomaly
+#          detection across systems.
+#   CC7.3  Evaluates security events -- incident investigation depends on
+#          accurate, consistent timestamps across all log sources.
+#   CC4.1  Monitors for security breaches -- forensic timelines require
+#          synchronised clocks across all endpoints and infrastructure.
+#
+# ISO 27001:2022:
+#   A.8.15  Logging -- requires that logs contain accurate timestamps.
+#           Clock synchronisation is a prerequisite for meaningful logging.
+#   A.8.17  Clock Synchronisation -- explicitly requires that the clocks of
+#           all relevant information processing systems be synchronised to
+#           an approved time source. This is a direct Annex A control.
+#
+# Kandji enforcement
+# ------------------
+# Type:          Configuration profile
+# Profile:       Custom profile — deploy com.apple.timed payload
+# Assignment:    All blueprints
+# Verify:        Kandji → Library → Custom Profiles → NTP profile assigned
+#
+# Create a custom macOS configuration profile with the com.apple.timed
+# payload:
+#   TMAutomaticTimeOnlyEnabled:  true   (enable automatic time sync)
+#   timeServer:                  time.nist.gov  (for FedRAMP)
+#                                time.apple.com (for corporate)
+#
+# For FedRAMP High, configure both a primary and secondary NTP server
+# to satisfy AU-8(2). Verify synchronisation with:
+#   sntp -sS time.nist.gov
+# Or check System Settings → General → Date & Time → "Set automatically"
+# is enabled and greyed out (managed).
+#
+# Resolution
+# ----------
+# Deploy the com.apple.timed configuration profile via Kandji. If the
+# device is not synchronising after the profile is applied:
+#   1. Verify network access to the configured NTP server (UDP port 123)
+#   2. Check: sudo sntp -sS time.nist.gov
+#   3. Restart timed: sudo launchctl kickstart -k system/com.apple.timed
+# For FedRAMP environments ensure UDP 123 is permitted outbound in your
+# network firewall policy.
+
+apiVersion: v1
+kind: policy
+spec:
+  name: NTP time synchronisation configured (macOS)
+  description: >
+    Checks that macOS is configured to synchronise time via a managed NTP
+    preference profile. Accurate time is required for audit log integrity,
+    Kerberos authentication, and certificate validation. Satisfies AU-8(1)
+    (Synchronisation with Authoritative Time Source) -- a FedRAMP High
+    required control -- HIPAA § 164.312(b) (Audit Controls), SOC 2 CC7.2,
+    and ISO 27001:2022 A.8.17 (Clock Synchronisation).
+  query: >
+    SELECT 1 FROM managed_policies
+    WHERE domain = 'com.apple.timed'
+      AND name = 'TMAutomaticTimeOnlyEnabled'
+      AND value = '1';
+  resolution: >
+    Deploy a Kandji configuration profile with the com.apple.timed payload
+    setting TMAutomaticTimeOnlyEnabled to true and specifying an authoritative
+    time server (time.nist.gov for FedRAMP, time.apple.com for corporate).
+    Verify with: sudo sntp -sS time.nist.gov
+    Ensure UDP port 123 is permitted outbound in your network firewall.
+    For FedRAMP High, configure both a primary and secondary NTP server
+    to satisfy AU-8(2).
+  platform: darwin
+  critical: true

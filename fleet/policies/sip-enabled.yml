@@ -1,0 +1,86 @@
+---
+# sip-enabled.yml
+# FleetDM Policy: System Integrity Protection (SIP) enabled
+#
+# Verifies that macOS System Integrity Protection is enabled. SIP prevents
+# modification of protected system files and directories even by root or sudo.
+# It can only be disabled at boot via Recovery Mode -- it cannot be bypassed
+# by malware or a compromised user account, making it a strong integrity control.
+#
+# Compliance mapping
+# ------------------
+# FedRAMP / NIST 800-53:
+#   SI-7      Software, Firmware, and Information Integrity -- requires
+#             mechanisms to detect unauthorised changes to software and firmware.
+#   SI-7(6)   Cryptographic Protection -- SIP uses signed system volume (SSV)
+#             to cryptographically verify system file integrity at boot.
+#   SC-39     Process Isolation -- SIP enforces process isolation by preventing
+#             user-space processes from modifying protected paths.
+#
+# HIPAA:
+#   § 164.312(c)(1)  Integrity -- requires protection of ePHI from improper
+#                   alteration or destruction. SIP prevents system-level
+#                   tampering that could compromise integrity controls.
+#   § 164.312(c)(2)  Mechanism to Authenticate ePHI -- SIP's cryptographic
+#                   verification supports integrity authentication.
+#
+# SOC 2:
+#   CC7.1  Detects and monitors for security events -- SIP generates kernel
+#          alerts when tampering is attempted, feeding into security monitoring.
+#   CC6.8  Prevents or detects unauthorised software -- SIP blocks unsigned
+#          or tampered system-level software from executing.
+#
+#
+# ISO 27001:2022:
+#   A.8.9   Configuration Management -- SIP enforces the integrity of
+#           system-level configuration by preventing unauthorised
+#           modification of protected system files and directories.
+#   A.8.7   Protection Against Malware -- SIP prevents malware from
+#           modifying system files, a key defence-in-depth control
+#           against persistent malware and rootkits.
+# Resolution
+# ----------
+# SIP can only be re-enabled by booting into macOS Recovery Mode (hold
+# Command+R on Intel or hold Power on Apple Silicon), opening Terminal,
+# and running: csrutil enable
+# Then restart the device. SIP status is not MDM-enforceable -- if this
+# policy fails, it indicates deliberate user action and warrants investigation.
+
+# Kandji enforcement
+# ------------------
+# Type:          CANNOT BE ENFORCED VIA MDM
+# Reason:        SIP can only be enabled or disabled by booting into macOS
+#                Recovery Mode. No MDM command or configuration profile can
+#                modify SIP state. This is by Apple design.
+#
+# Detection only: this Fleet policy detects SIP state but Kandji cannot
+# automatically re-enforce it if disabled. A failing device requires
+# manual intervention.
+#
+# Recommended response to a SIP failure:
+#   1. Alert the user and their manager immediately
+#   2. Investigate how SIP was disabled (requires physical access or Recovery Mode)
+#   3. Schedule in-person remediation — user must boot to Recovery Mode
+#   4. Consider this a potential security incident and investigate further
+#
+# Kandji action: configure an alert or parameter check to notify IT when
+# SIP is disabled, but no automated remediation is possible.
+apiVersion: v1
+kind: policy
+spec:
+  name: System Integrity Protection enabled (macOS)
+  description: >
+    Checks that macOS System Integrity Protection (SIP) is enabled. SIP prevents
+    modification of protected system files even by root. Satisfies SI-7 (Software
+    Integrity), HIPAA § 164.312(c)(1) (Integrity), and SOC 2 CC6.8.
+  query: >
+    SELECT 1 FROM sip_config
+    WHERE config_flag = 'sip'
+      AND enabled = 1;
+  resolution: >
+    SIP must be re-enabled via macOS Recovery Mode. Boot into Recovery
+    (Command+R on Intel, hold Power on Apple Silicon), open Terminal, and run:
+    csrutil enable. Then restart. A failing device warrants investigation as
+    SIP can only be disabled with physical access or Recovery Mode.
+  platform: darwin
+  critical: true

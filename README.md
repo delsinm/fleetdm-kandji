@@ -235,8 +235,10 @@ it-infrastructure/
 │
 └── .github/
     └── workflows/
-        ├── fleet-sync.yml           ← applies Fleet policies to Fleet server on merge
-        └── drift-check.yml          ← runs drift_check.py hourly, 24/7
+        ├── fleet-sync.yml           ← GitOps helper action - applies Fleet policies to Fleet server on merge
+        ├── fleet-plan-apply.yml     ← more verbose GitOps helper action - performs a Fleet "plan" on commit, applies Fleet policies to Fleet server on merge
+        ├── drift-check.yml          ← runs drift_check.py hourly, 24/7
+        └── README.md                ← more in-depth explanation of the included Github actions
 ```
 
 ### Compliance documentation

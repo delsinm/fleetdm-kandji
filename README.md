@@ -83,7 +83,7 @@ FleetDM                    Kandji                     Slack
 
 There is one active script: `drift_check.py`. A real-time webhook handler (`fleet_remediation.py`) also exists in the `archive/` folder. It is complete and but not currently deployed — see `archive/README.md` for context on when to revisit it.
 
-### `drift_check.py` — Scheduled compliance sweep
+# `drift_check.py` — Scheduled compliance sweep
 
 This script runs on a schedule (hourly, 24/7). It actively polls FleetDM for any devices currently failing any watched policy, then remediates them.
 

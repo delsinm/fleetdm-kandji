@@ -103,8 +103,8 @@ The watched policy list is maintained in `remediation/policies.yml`.
 
 | Policy | File | Contribution |
 |---|---|---|
-| CrowdStrike running | `crowdstrike-running.yml` | Primary control for malicious software detection |
-| CrowdStrike version current | `crowdstrike-version.yml` | Ensures detection capability is current |
+| EDR software running | `edr-*-running.yml` | Primary control for malicious software detection |
+| EDR software version current | `edr-*-version.yml` | Ensures detection capability is current |
 | Gatekeeper enabled | `gatekeeper-enabled.yml` | Prevents unsigned software execution |
 | System Integrity Protection enabled | `sip-enabled.yml` | Prevents system-level tampering |
 | Firewall enabled | `firewall-enabled.yml` | Blocks uninvited inbound connections |
@@ -119,15 +119,15 @@ The watched policy list is maintained in `remediation/policies.yml`.
 |---|---|---|
 | OS up to date | `os-up-to-date.yml` | Verifies patches applied, eliminates known CVEs |
 | Automatic updates enabled | `auto-updates-enabled.yml` | Ensures device is checking for new vulnerabilities |
-| CrowdStrike version current | `crowdstrike-version.yml` | Verifies detection capability is current |
+| EDR software version current | `edr-*-version.yml` | Verifies detection capability is current |
 | Audit logging enabled | `audit-logging-enabled.yml` | Provides log data for vulnerability event detection |
 
 ### CC7.2 — Monitors System Components for Anomalies
 
 | Policy | File | Contribution |
 |---|---|---|
-| CrowdStrike running | `crowdstrike-running.yml` | Continuous endpoint behavioural monitoring |
-| CrowdStrike version current | `crowdstrike-version.yml` | Ensures monitoring capability is effective |
+| EDR software running | `edr-*-running.yml` | Continuous endpoint behavioural monitoring |
+| EDR software version current | `edr-*-version.yml` | Ensures monitoring capability is effective |
 | Audit logging enabled | `audit-logging-enabled.yml` | Provides endpoint event data for anomaly detection |
 | NTP time synchronisation configured | `ntp-configured.yml` | Ensures timestamps are accurate for event correlation |
 | System Integrity Protection enabled | `sip-enabled.yml` | Generates alerts on system tampering attempts |
@@ -137,7 +137,7 @@ The watched policy list is maintained in `remediation/policies.yml`.
 | Policy | File | Contribution |
 |---|---|---|
 | Audit logging enabled | `audit-logging-enabled.yml` | Primary source of endpoint security event data |
-| CrowdStrike running | `crowdstrike-running.yml` | Generates structured security events for evaluation |
+| EDR software running | `edr-*-running.yml` | Generates structured security events for evaluation |
 | NTP time synchronisation configured | `ntp-configured.yml` | Ensures event timestamps are reliable for investigation |
 | Screen sharing disabled | `screen-sharing-disabled.yml` | Removes blind spot in session event detection |
 

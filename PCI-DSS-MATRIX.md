@@ -51,7 +51,7 @@ The watched policy list is maintained in `remediation/policies.yml`.
 | Req 5 — Protect Against Malware | Strong | EDR running + version + kernel extension (5.3.3) |
 | Req 6 — Secure Systems and Software | Covered | OS patching, auto-updates, Gatekeeper |
 | Req 7 — Restrict Access | Covered | Least privilege, guest disabled, admin accounts |
-| Req 8 — Identify and Authenticate | Strong | Password, screen lock, session timeout, MFA (Okta Verify) |
+| Req 8 — Identify and Authenticate | Strong | Password, screen lock, session timeout, MFA, account lockout |
 | Req 10 — Log and Monitor | Strong | Audit logging + flags configured + NTP |
 | Req 11 — Test Security | Covered | Drift check provides continuous automated testing |
 | Req 12 — Organisational Policies | Gap | Policies, training, incident response are organisational |
@@ -189,6 +189,7 @@ The watched policy list is maintained in `remediation/policies.yml`.
 
 | Sub-requirement | Description | Policy | File |
 |---|---|---|---|
+| 8.3.4 | Lock out user accounts after not more than 10 invalid authentication attempts | Account lockout configured | `account-lockout-configured.yml` |
 | 8.3.6 | Minimum password complexity requirements | Password complexity enforced | `password-complexity.yml` |
 | 8.3.9 | Passwords/passphrases changed at least once every 90 days | Password complexity enforced | `password-complexity.yml` |
 
@@ -236,6 +237,11 @@ The watched policy list is maintained in `remediation/policies.yml`.
 | 10.6.1 | System clocks and time synchronised using accepted technology | NTP time synchronisation configured | `ntp-configured.yml` |
 | 10.6.2 | Systems configured to correct time from authoritative source | NTP time synchronisation configured | `ntp-configured.yml` |
 | 10.6.3 | Time synchronisation settings and data protected | NTP time synchronisation configured | `ntp-configured.yml` |
+
+> **Disk space (Req 10.5.1):** The `disk-space-available.yml` policy ensures
+> audit logs can be retained — a full disk causes auditd to stop writing,
+> directly violating Req 10.5.1. Include `disk-space-available.yml` in your
+> watchlist to monitor this prerequisite continuously.
 
 > **PCI DSS 10.6 is explicit about NTP** — it is one of the few requirements
 > that directly mandates time synchronisation by name. A QSA will specifically

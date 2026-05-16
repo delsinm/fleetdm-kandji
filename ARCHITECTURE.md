@@ -286,7 +286,8 @@ Kandji rate limit: 300 requests/minute.
 
 Per-service timeouts: 
 * Fleet (5, 10)s 
-* Kandji (5, 15)s Slack (5, 10)s 
+* Kandji (5, 15)s
+* Slack (5, 10)s 
 * GitHub Actions job timeout: 6 hours (not a practical concern at these volumes).
 
 ---

@@ -76,8 +76,7 @@ See `archive/README.md` for context on when to deploy the webhook handler.
 
 ### `drift_check.py` — Scheduled Drift Detection
 
-Standalone script that actively polls Fleet for policy failures and remediates
-them, independent of any webhook delivery. The only active script in this system.
+Standalone script that actively polls Fleet for policy failures and remediates them, independent of any webhook delivery. The only active script in this system.
 
 **Flow:**
 
@@ -116,8 +115,7 @@ The script produces two independent log streams simultaneously.
 
 ### Human-readable log → stderr
 
-Standard Python logging. Useful for local debugging, cron monitoring, and
-reading GitHub Actions run logs directly.
+Standard Python logging. Useful for local debugging, cron monitoring, and reading GitHub Actions run logs directly.
 
 ```
 2024-01-15 14:00:01 INFO  Starting drift check -- watching 32 policies
@@ -130,9 +128,7 @@ reading GitHub Actions run logs directly.
 
 ### Structured JSON log → stdout (SIEM)
 
-Every compliance event is emitted as a JSON Lines record — one self-contained
-JSON object per line. Natively understood by Splunk HEC, Elastic Filebeat,
-Datadog Agent, and Google Cloud Logging.
+Every compliance event is emitted as a JSON Lines record — one self-contained JSON object per line. Natively understood by Splunk HEC, Elastic Filebeat, Datadog Agent, and Google Cloud Logging.
 
 ```json
 {"timestamp": "2024-01-15T14:00:01Z", "event": "drift_check_start", "policies_watched": 32}
@@ -225,11 +221,7 @@ it-infrastructure/
         └── README.md                ← workflow documentation
 ```
 
-Kandji is managed through the Kandji UI and is not represented in this
-repository. Blueprints, library items, and enrollment settings are configured
-directly in Kandji and treated as the source of truth. The remediation scripts
-interact with Kandji only to trigger blankpushes — they do not read or modify
-any Kandji configuration.
+Kandji is managed through the Kandji UI and is not represented in this repository. Blueprints, library items, and enrollment settings are configured directly in Kandji and treated as the source of truth. The remediation scripts interact with Kandji only to trigger blankpushes — they do not read or modify any Kandji configuration.
 
 ---
 

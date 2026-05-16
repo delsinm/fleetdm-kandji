@@ -282,7 +282,8 @@ jobs:
 
 **Rate Limits:**
 
-Kandji rate limit: 300 requests/minute. 
+Kandji rate limit: 300 requests/minute.
+
 Per-service timeouts: 
 * Fleet (5, 10)s 
 * Kandji (5, 15)s Slack (5, 10)s 

@@ -50,6 +50,15 @@
 #          approved MDM channels.
 #
 #
+#
+# PCI DSS v4.0:
+#   Req 2.2.7   All non-console administrative access encrypted — disabling ARD
+#               removes uncontrolled remote admin path
+#   Req 1.3.2   Restrict inbound traffic — ARD opens inbound remote management
+#               port
+#   Req 8.6.2   Application and system accounts cannot log in interactively —
+#               ARD remote admin access must be controlled
+#
 # ISO 27001:2022:
 #   A.8.20  Networks Security -- Apple Remote Desktop is a legacy remote
 #           administration service superseded by MDM. Disabling removes

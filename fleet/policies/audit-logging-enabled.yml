@@ -45,6 +45,15 @@
 #          evidence for breach detection and forensic investigation.
 #
 #
+#
+# PCI DSS v4.0:
+#   Req 10.2.1  Audit logs implemented to capture all required individual user
+#               access events
+#   Req 10.3.2  Audit log files protected from destruction and unauthorised
+#               modifications
+#   Req 10.5.1  Audit logs retained for at least 12 months with at least 3
+#               months immediately available
+#
 # ISO 27001:2022:
 #   A.8.15  Logging -- requires production, storage, and protection of
 #           logs recording user activities, exceptions, faults, and

@@ -24,6 +24,13 @@
 #          exposure window for physical access attacks.
 #
 #
+#
+# PCI DSS v4.0:
+#   Req 8.2.8   Session idle timeout — screen lock initiates the timeout that
+#               requires re-authentication
+#   Req 9.4.2   Access to sensitive areas validated — screen lock prevents
+#               unattended device access
+#
 # ISO 27001:2022:
 #   A.8.1   User Endpoint Devices -- requires that a clear screen policy
 #           be adopted for user endpoint devices, including automatic

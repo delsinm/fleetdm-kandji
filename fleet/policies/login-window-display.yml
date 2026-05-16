@@ -52,6 +52,13 @@
 # username entry rather than displaying a clickable account list.
 #
 #
+#
+# PCI DSS v4.0:
+#   Req 8.2.1   All users assigned a unique ID — login window requiring name and
+#               password enforces unique identification
+#   Req 8.6.1   Use of application and system accounts managed — login window
+#               prevents account enumeration
+#
 # ISO 27001:2022:
 #   A.8.5   Secure Authentication -- displaying usernames at the login
 #           screen reduces the authentication challenge by providing the

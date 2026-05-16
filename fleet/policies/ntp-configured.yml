@@ -66,6 +66,15 @@
 #   CC4.1  Monitors for security breaches -- forensic timelines require
 #          synchronised clocks across all endpoints and infrastructure.
 #
+#
+# PCI DSS v4.0:
+#   Req 10.6.1  System clocks synchronised using accepted time technology — NTP
+#               via managed profile satisfies this requirement
+#   Req 10.6.2  Systems configured to receive time signals from
+#               industry-accepted time sources — time.nist.gov or equivalent
+#   Req 10.6.3  Time synchronisation settings protected from unauthorised access
+#               — managed profile prevents user modification
+#
 # ISO 27001:2022:
 #   A.8.15  Logging -- requires that logs contain accurate timestamps.
 #           Clock synchronisation is a prerequisite for meaningful logging.

@@ -32,6 +32,15 @@
 #          indicate attempts to run unauthorised software.
 #
 #
+#
+# PCI DSS v4.0:
+#   Req 5.4.1   Processes in place to detect and protect against phishing —
+#               Gatekeeper prevents execution of malicious unsigned software
+#   Req 6.4.1   Public-facing web applications protected against attacks —
+#               Gatekeeper prevents installation of attack tools
+#   Req 2.2.4   Only necessary and secure services enabled — Gatekeeper enforces
+#               software execution policy
+#
 # ISO 27001:2022:
 #   A.8.7   Protection Against Malware -- Gatekeeper's code signing
 #           verification and notarisation checks implement malware

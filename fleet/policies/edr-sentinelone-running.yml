@@ -66,6 +66,17 @@
 #   CC7.3  Evaluates security events -- SentinelOne alerts and storylines
 #          feed into the security event evaluation and response process.
 #
+#
+# PCI DSS v4.0:
+#   Req 5.2.1   Anti-malware solution deployed on all applicable system
+#               components
+#   Req 5.2.2   Anti-malware solution capable of detecting, removing, and
+#               protecting against all known malware types
+#   Req 5.3.2   Periodic evaluations or continuous behavioural analysis
+#               performed
+#   Req 10.7.2  Failures of critical security controls — EDR agent is a critical
+#               control that must be monitored
+#
 # ISO 27001:2022:
 #   A.8.7   Protection Against Malware -- requires controls against malware
 #           to be implemented. SentinelOne is the primary technical control

@@ -44,6 +44,15 @@
 #          hard to detect and attribute. Disabling eliminates this blind spot.
 #
 #
+#
+# PCI DSS v4.0:
+#   Req 1.3.2   Restrict inbound traffic — screen sharing opens an inbound VNC
+#               listener
+#   Req 2.2.7   Non-console administrative access encrypted — disabling screen
+#               sharing removes uncontrolled graphical access
+#   Req 2.2.4   Only necessary services enabled — screen sharing is not required
+#               for CDE operations
+#
 # ISO 27001:2022:
 #   A.8.20  Networks Security -- screen sharing opens an inbound network
 #           service that is unnecessary on MDM-managed endpoints and

@@ -36,6 +36,13 @@
 #          the system from identifying patch-related risks.
 #
 #
+#
+# PCI DSS v4.0:
+#   Req 6.3.3   All system components protected from known vulnerabilities via
+#               applicable security patches
+#   Req 6.3.3   Security patches installed within defined timeframes —
+#               auto-updates enables timely patching
+#
 # ISO 27001:2022:
 #   A.8.8   Management of Technical Vulnerabilities -- requires timely
 #           identification and remediation of technical vulnerabilities.

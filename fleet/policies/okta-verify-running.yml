@@ -57,6 +57,15 @@
 #   CC6.6  Security against external threats -- device trust gated on Okta
 #          Verify prevents access from unmanaged or compromised devices.
 #
+#
+# PCI DSS v4.0:
+#   Req 8.4.2   MFA implemented for all access into the CDE — Okta Verify
+#               provides the device-bound MFA factor
+#   Req 8.4.3   MFA implemented for all remote network access originating from
+#               outside the entity's network
+#   Req 8.5.1   MFA systems configured to prevent misuse — Okta Device Trust
+#               ensures only enrolled devices can authenticate
+#
 # ISO 27001:2022:
 #   A.8.5   Secure Authentication -- Okta Verify implements device-bound
 #           cryptographic authentication, satisfying the secure authentication

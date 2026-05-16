@@ -53,6 +53,15 @@
 #          file sharing occurs through approved, monitored channels.
 #
 #
+#
+# PCI DSS v4.0:
+#   Req 1.3.2   Restrict outbound traffic to only necessary communications —
+#               AirDrop represents an uncontrolled out-of-band data transfer path
+#   Req 4.2.1   Strong cryptography for cardholder data in transit — AirDrop can
+#               transmit data without organisational encryption controls
+#   Req 12.3.3  Cryptographic cipher suites reviewed — removing uncontrolled
+#               wireless transfer paths reduces cipher management scope
+#
 # ISO 27001:2022:
 #   A.8.1   User Endpoint Devices -- requires controls to protect information
 #           on endpoint devices including restrictions on data transfer

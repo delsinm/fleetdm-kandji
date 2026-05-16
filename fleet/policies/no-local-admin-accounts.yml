@@ -56,6 +56,15 @@
 #          be granted through a formal provisioning and approval process.
 #
 #
+#
+# PCI DSS v4.0:
+#   Req 7.2.2   Access assigned based on need-to-know and least privilege —
+#               unauthorised admin accounts violate least privilege
+#   Req 8.2.6   Inactive accounts removed or disabled — unauthorised accounts
+#               may represent dormant access
+#   Req 8.6.1   Use of system and application accounts managed — local admin
+#               accounts must be formally provisioned
+#
 # ISO 27001:2022:
 #   A.8.2   Privileged Access Rights -- requires restriction, control, and
 #           monitoring of privileged access rights. Local administrator

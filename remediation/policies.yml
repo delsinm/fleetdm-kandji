@@ -10,7 +10,7 @@
 #
 # Compliance coverage summary
 # ---------------------------
-# FedRAMP / NIST 800-53:  AC-2, AC-3, AC-4, AC-6, AC-11, AC-17, AC-19, AC-20,
+# FedRAMP / NIST 800-53:   AC-2, AC-3, AC-4, AC-6, AC-11, AC-17, AC-19, AC-20,
 #                          AU-2, AU-3, AU-8, AU-8(1), AU-8(2), AU-9, AU-12,
 #                          CM-6, CM-7, CM-7(1), CM-11, CP-9, CP-10,
 #                          IA-2, IA-5, MA-4, MP-5, MP-7, MP-8, RA-5,
@@ -100,6 +100,14 @@ policies:
   # CM-7, SC-7, AU-2 | HIPAA § 164.312(e)(1) | SOC 2 CC6.6, CC6.7
   - Content caching disabled (macOS)
 
+  # AC-18, AC-18(1), SC-8, CM-7 | HIPAA § 164.312(e)(1) | SOC 2 CC6.7
+  # FedRAMP High required — set DisableBluetooth: true for High baseline
+  - Bluetooth managed via configuration profile (macOS)
+
+  # SC-20, SC-21, SI-3, CM-7 | HIPAA § 164.312(e)(1) | ISO A.8.23
+  # Closes the A.8.23 (Web Filtering) gap in ISO 27001 matrix
+  - DNS filtering configured (macOS)
+
   # --- System Integrity --------------------------------------------
 
   # SI-7, SI-7(6), SC-39 | HIPAA § 164.312(c)(1) | SOC 2 CC6.8
@@ -135,6 +143,14 @@ policies:
 
   # IA-2, IA-5, AC-2, AC-11 | HIPAA § 164.312(d) | SOC 2 CC6.1, CC6.2
   - Login window shows name and password fields (macOS)
+
+  # IA-2, IA-2(1), IA-2(2), IA-3, AC-17 | HIPAA § 164.312(d) | SOC 2 CC6.1
+  # Required for Okta Device Trust — without this, device trust cannot be evaluated
+  - Okta Verify installed (macOS)
+
+  # CA-7, CM-6, IA-3 | HIPAA § 164.308(a)(8) | SOC 2 CC7.2
+  # Meta-control — verifies the MDM enforcement mechanism itself is operational
+  - MDM enrollment certificate valid (macOS)
 
   # --- Audit & Logging ---------------------------------------------
 

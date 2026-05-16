@@ -1,0 +1,135 @@
+---
+# dns-filtering-configured.yml
+# FleetDM Policy: DNS filtering / DNS-over-HTTPS configured via managed policy
+#
+# Verifies that a managed DNS configuration is enforced on the endpoint via
+# a configuration profile. DNS filtering provides:
+#
+#   - Blocks known malicious domains at the network level before connections
+#     are established (malware C2, phishing, known bad infrastructure)
+#   - Encrypts DNS queries (DNS-over-HTTPS) preventing DNS-based surveillance
+#     and man-in-the-middle attacks on DNS resolution
+#   - Provides a log of all DNS queries for threat hunting and incident response
+#   - Enforces acceptable use policy by blocking non-business content categories
+#
+# Supported DNS filtering solutions (all use com.apple.dnsSettings.managed):
+#   Cloudflare Gateway  →  DNS-over-HTTPS, strong threat intel
+#   Cisco Umbrella      →  DNS-over-HTTPS, strong enterprise feature set
+#   Zscaler             →  DNS-over-HTTPS or proxy-based
+#   NextDNS             →  DNS-over-HTTPS, flexible, SMB-friendly
+#   Apple Private Relay  →  Consumer only, not suitable for enterprise
+#
+# The query checks for the managed DNS settings profile domain, which is
+# present whenever a DNS configuration profile is deployed via MDM. It does
+# not check which specific resolver is configured -- that is enforced by the
+# Kandji profile content.
+#
+# Compliance mapping
+# ------------------
+# FedRAMP / NIST 800-53:
+#   SC-20     Secure Name/Address Resolution Service -- requires DNS to be
+#             operated securely. DNS-over-HTTPS satisfies the encrypted
+#             resolution requirement.
+#   SC-21     Secure Name/Address Resolution (recursive) -- requires the
+#             organisation to request and perform data origin authentication
+#             and data integrity verification on DNS responses.
+#   SC-22     Architecture and Provisioning for Name/Address Resolution --
+#             requires a managed DNS architecture. A centrally managed
+#             DNS-over-HTTPS profile satisfies this control.
+#   SI-3      Malware Protection -- DNS filtering blocks known malicious
+#             domains before connections are established, complementing
+#             endpoint EDR with a network-layer control.
+#   CM-7      Least Functionality -- DNS filtering restricts endpoint
+#             network access to approved destinations.
+#
+# HIPAA:
+#   § 164.312(e)(1)  Transmission Security -- DNS-over-HTTPS encrypts DNS
+#                    queries, protecting PHI-adjacent network activity from
+#                    interception and surveillance.
+#   § 164.308(a)(1)(ii)(B)  Risk Management -- DNS filtering reduces the
+#                    risk of malware infection and data exfiltration via
+#                    DNS-based attack techniques.
+#
+# SOC 2:
+#   CC6.6  Security against external threats -- DNS filtering blocks
+#          connections to known malicious infrastructure, reducing the
+#          attack surface for external threats.
+#   CC6.7  Restricts transmission of confidential information -- DNS
+#          filtering can block exfiltration attempts via DNS tunnelling.
+#   CC7.2  Monitors system components for anomalies -- DNS query logs
+#          provide visibility into endpoint network behaviour for anomaly
+#          detection and threat hunting.
+#
+# ISO 27001:2022:
+#   A.8.20  Network Security -- DNS filtering enforces network-level
+#           security controls on endpoint DNS resolution.
+#   A.8.23  Web Filtering -- DNS-based filtering satisfies the web
+#           filtering control requirement. This is currently listed as
+#           a gap in our ISO 27001 matrix -- this policy closes it.
+#   A.8.7   Protection Against Malware -- DNS filtering blocks known
+#           malicious domains before EDR needs to act.
+#
+# PCI DSS v4.0:
+#   Req 1.3.2  Restrict inbound and outbound traffic -- DNS filtering
+#              restricts outbound DNS to approved resolvers, reducing
+#              the risk of data exfiltration via DNS.
+#   Req 6.3.3  All components protected from known vulnerabilities --
+#              DNS filtering blocks known malicious infrastructure at
+#              the DNS layer before exploitation can occur.
+#
+# Kandji enforcement
+# ------------------
+# Type:          Configuration profile
+# Profile:       DNS Settings (com.apple.dnsSettings.managed)
+# Assignment:    All blueprints
+# Verify:        Kandji → Library → Custom Profiles → DNS Settings profile assigned
+#
+# Create a custom macOS configuration profile with the
+# com.apple.dnsSettings.managed payload. Example for Cloudflare Gateway:
+#
+#   DNSSettings:
+#     DNSProtocol: HTTPS
+#     ServerURL:   https://XXXX.cloudflare-gateway.com/dns-query
+#     ServerName:  XXXX.cloudflare-gateway.com
+#
+# Replace XXXX with your Cloudflare Gateway location ID (found in
+# Cloudflare Zero Trust → Gateway → DNS Locations).
+#
+# For Cisco Umbrella, use the Umbrella roaming client instead of a DNS
+# profile -- it provides DNS filtering plus additional network visibility.
+#
+# Resolution
+# ----------
+# If DNS filtering is not configured:
+#   1. Verify the DNS Settings profile is assigned in the device's blueprint
+#   2. Trigger a blankpush to force the device to pull the profile
+#   3. Verify profile installation: System Settings → Privacy & Security →
+#      Profiles → confirm DNS Settings profile is listed
+#   4. Check that the profile is not being overridden by a user-configured
+#      DNS setting (managed profiles take precedence on macOS)
+
+apiVersion: v1
+kind: policy
+spec:
+  name: DNS filtering configured (macOS)
+  description: >
+    Checks that a managed DNS configuration (DNS-over-HTTPS or DNS filtering)
+    is enforced via a configuration profile. DNS filtering blocks known malicious
+    domains at the network layer before EDR needs to act, encrypts DNS queries,
+    and provides query logs for threat hunting. Satisfies SC-20 (Secure Name
+    Resolution), SC-21, SI-3 (Malware Protection), HIPAA § 164.312(e)(1)
+    (Transmission Security), SOC 2 CC6.6, ISO 27001:2022 A.8.23 (Web Filtering),
+    and PCI DSS Req 1.3.2. Closes the A.8.23 gap in the ISO 27001 matrix.
+  query: >
+    SELECT 1 FROM managed_policies
+    WHERE domain = 'com.apple.dnsSettings.managed'
+      AND name = 'DNSProtocol';
+  resolution: >
+    Deploy a Kandji configuration profile with the com.apple.dnsSettings.managed
+    payload configured for your DNS filtering solution (Cloudflare Gateway,
+    Cisco Umbrella, Zscaler, or NextDNS). Set DNSProtocol to HTTPS and provide
+    the ServerURL and ServerName for your resolver. Verify installation in
+    System Settings → Privacy & Security → Profiles. Trigger a blankpush if
+    the profile is assigned but not yet applied.
+  platform: darwin
+  critical: true

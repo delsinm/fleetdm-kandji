@@ -41,7 +41,7 @@ The watched policy list is maintained in `remediation/policies.yml`.
 | Criteria | Description | Policy | File |
 |---|---|---|---|
 | CC4.1 | Monitors for security breaches and anomalies | Audit logging enabled | `audit-logging-enabled.yml` |
-| CC4.1 | Monitors for security breaches and anomalies | EDR software running | `edr-*-running.yml` |
+| CC4.1 | Monitors for security breaches and anomalies | CrowdStrike running | `crowdstrike-running.yml` |
 | CC4.1 | Monitors for security breaches and anomalies | NTP time synchronisation configured | `ntp-configured.yml` |
 
 ---
@@ -60,6 +60,8 @@ The watched policy list is maintained in `remediation/policies.yml`.
 | Login window shows name and password fields | `login-window-display.yml` | Prevents username enumeration at login screen |
 | Disk encryption enabled | `disk-encryption.yml` | Prevents physical access to data |
 | FileVault recovery key escrowed | `filevault-key-escrowed.yml` | Demonstrates organisational key management |
+| Okta Verify installed | `okta-verify-running.yml` | Device trust gate — only managed compliant devices authenticate |
+| MDM enrollment certificate valid | `mdm-enrollment-valid.yml` | Verifies device management is operational |
 
 ### CC6.2 — Prior to Issuing System Credentials
 
@@ -88,6 +90,8 @@ The watched policy list is maintained in `remediation/policies.yml`.
 | Internet sharing disabled | `internet-sharing-disabled.yml` | Prevents endpoint acting as network relay |
 | Printer sharing disabled | `printer-sharing-disabled.yml` | Removes unnecessary inbound IPP listener |
 | Content caching disabled | `content-caching-disabled.yml` | Prevents endpoint acting as content relay |
+| Bluetooth managed via configuration profile | `bluetooth-managed.yml` | Eliminates Bluetooth-based attack surface |
+| DNS filtering configured | `dns-filtering-configured.yml` | Blocks connections to known malicious infrastructure |
 | CrowdStrike running | `crowdstrike-running.yml` | Detects and prevents external threat execution |
 | CrowdStrike version current | `crowdstrike-version.yml` | Ensures detection is current against recent threats |
 
@@ -96,6 +100,8 @@ The watched policy list is maintained in `remediation/policies.yml`.
 | Policy | File | Contribution |
 |---|---|---|
 | AirDrop disabled | `airdrop-disabled.yml` | Prevents transmission to unmanaged devices |
+| Bluetooth managed via configuration profile | `bluetooth-managed.yml` | Prevents wireless data transfer to unmanaged devices |
+| DNS filtering configured | `dns-filtering-configured.yml` | Blocks DNS tunnelling exfiltration attempts |
 | Disk encryption enabled | `disk-encryption.yml` | Protects data if device is transmitted or lost |
 | FileVault recovery key escrowed | `filevault-key-escrowed.yml` | Demonstrates managed encryption governance |
 
@@ -103,8 +109,8 @@ The watched policy list is maintained in `remediation/policies.yml`.
 
 | Policy | File | Contribution |
 |---|---|---|
-| EDR software running | `edr-*-running.yml` | Primary control for malicious software detection |
-| EDR software version current | `edr-*-version.yml` | Ensures detection capability is current |
+| CrowdStrike running | `crowdstrike-running.yml` | Primary control for malicious software detection |
+| CrowdStrike version current | `crowdstrike-version.yml` | Ensures detection capability is current |
 | Gatekeeper enabled | `gatekeeper-enabled.yml` | Prevents unsigned software execution |
 | System Integrity Protection enabled | `sip-enabled.yml` | Prevents system-level tampering |
 | Firewall enabled | `firewall-enabled.yml` | Blocks uninvited inbound connections |
@@ -119,25 +125,26 @@ The watched policy list is maintained in `remediation/policies.yml`.
 |---|---|---|
 | OS up to date | `os-up-to-date.yml` | Verifies patches applied, eliminates known CVEs |
 | Automatic updates enabled | `auto-updates-enabled.yml` | Ensures device is checking for new vulnerabilities |
-| EDR software version current | `edr-*-version.yml` | Verifies detection capability is current |
+| CrowdStrike version current | `crowdstrike-version.yml` | Verifies detection capability is current |
 | Audit logging enabled | `audit-logging-enabled.yml` | Provides log data for vulnerability event detection |
 
 ### CC7.2 — Monitors System Components for Anomalies
 
 | Policy | File | Contribution |
 |---|---|---|
-| EDR software running | `edr-*-running.yml` | Continuous endpoint behavioural monitoring |
-| EDR software version current | `edr-*-version.yml` | Ensures monitoring capability is effective |
+| CrowdStrike running | `crowdstrike-running.yml` | Continuous endpoint behavioural monitoring |
+| CrowdStrike version current | `crowdstrike-version.yml` | Ensures monitoring capability is effective |
 | Audit logging enabled | `audit-logging-enabled.yml` | Provides endpoint event data for anomaly detection |
 | NTP time synchronisation configured | `ntp-configured.yml` | Ensures timestamps are accurate for event correlation |
 | System Integrity Protection enabled | `sip-enabled.yml` | Generates alerts on system tampering attempts |
+| MDM enrollment certificate valid | `mdm-enrollment-valid.yml` | Detects devices that have silently lost MDM management |
 
 ### CC7.3 — Evaluates Security Events
 
 | Policy | File | Contribution |
 |---|---|---|
 | Audit logging enabled | `audit-logging-enabled.yml` | Primary source of endpoint security event data |
-| EDR software running | `edr-*-running.yml` | Generates structured security events for evaluation |
+| CrowdStrike running | `crowdstrike-running.yml` | Generates structured security events for evaluation |
 | NTP time synchronisation configured | `ntp-configured.yml` | Ensures event timestamps are reliable for investigation |
 | Screen sharing disabled | `screen-sharing-disabled.yml` | Removes blind spot in session event detection |
 

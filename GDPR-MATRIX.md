@@ -53,10 +53,14 @@ accidental loss, destruction, or damage.
 | CrowdStrike running | `crowdstrike-running.yml` | Protects against malicious software that could exfiltrate personal data |
 | CrowdStrike version current | `crowdstrike-version.yml` | Ensures malware protection is current against recent threats |
 | Firewall enabled | `firewall-enabled.yml` | Prevents unauthorised inbound network access to endpoint |
+| Bluetooth managed via configuration profile | `bluetooth-managed.yml` | Prevents unauthorised wireless access to device and data |
+| DNS filtering configured | `dns-filtering-configured.yml` | Blocks connections to known malicious infrastructure |
 | Screen lock enabled | `screen-lock.yml` | Prevents physical access to personal data on unattended device |
 | Password required after lock | `password-required-after-lock.yml` | Enforces authentication after inactivity |
 | No unauthorized local admin accounts | `no-local-admin-accounts.yml` | Limits access to personal data to authorised users |
 | Guest account disabled | `guest-account-disabled.yml` | Eliminates unauthenticated access to device |
+| Okta Verify installed | `okta-verify-running.yml` | Device trust gate — only managed devices can authenticate to data systems |
+| MDM enrollment certificate valid | `mdm-enrollment-valid.yml` | Ensures device management controls are operational |
 
 ---
 
@@ -111,6 +115,8 @@ resilience of processing systems and services.
 | SSH remote login disabled | `ssh-disabled.yml` | Eliminates remote access confidentiality risk |
 | Screen sharing disabled | `screen-sharing-disabled.yml` | Prevents visual data exposure via remote access |
 | AirDrop disabled | `airdrop-disabled.yml` | Prevents uncontrolled data transfer |
+| Bluetooth managed via configuration profile | `bluetooth-managed.yml` | Prevents wireless data exfiltration to unmanaged devices |
+| DNS filtering configured | `dns-filtering-configured.yml` | Blocks DNS tunnelling and malicious domain connections |
 | No unauthorized local admin accounts | `no-local-admin-accounts.yml` | Least privilege access to data |
 
 **Integrity:**

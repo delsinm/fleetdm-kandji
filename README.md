@@ -201,7 +201,7 @@ Each record contains a UTC ISO 8601 timestamp and a self-describing event type:
 
 ### Configuration
 
-By default, the console will display the JSON logs(stdout) alongside the human-readable output(stderr). To separate them, set the `JSON_LOG_FILE` environment variable to a file path — the script will append JSON lines there while human-readable logs continue to stderr:
+By default, running the script from the console will display the JSON logs(stdout) alongside the human-readable output(stderr). To separate them, set the `JSON_LOG_FILE` environment variable to a file path — the script will append JSON lines there while human-readable logs continue to stderr:
 
 ```bash
 JSON_LOG_FILE=/var/log/drift_check_json.log python drift_check.py
@@ -301,11 +301,7 @@ Once applied, policies will begin evaluating on enrolled devices within minutes.
 
 ### Step 3 — Set up the drift check
 
-The drift check runs automatically via GitHub Actions. The workflow file is already in the repository at `.github/workflows/drift-check.yml`. Push the repository to GitHub. The workflow will run automatically on the configured schedule:
-
-```
-Hourly, 24/7 — continuous monitoring with no time restriction
-```
+The drift check runs automatically via GitHub Actions. The workflow file is already in the repository at `.github/workflows/drift-check.yml`. Push the repository to GitHub. The workflow will run automatically, hourly, 24/7.
 
 This ensures compliance drift is detected within one hour regardless of when it occurs, which satisfies the "continuous monitoring" requirement across FedRAMP, HIPAA, SOC 2, and ISO 27001. Clean runs produce no Slack message, so there is no operational noise from off-hours execution.
 

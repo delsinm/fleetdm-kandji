@@ -1,0 +1,154 @@
+---
+# disk-space-available.yml
+# FleetDM Policy: Sufficient disk space available
+#
+# Verifies that the boot disk has at least 15% free space. Low disk space is
+# a meaningful security and compliance risk, not just an operational one:
+#
+#   Audit log loss:    BSM audit logs are written to /var/audit. A full disk
+#                      causes auditd to stop logging events, creating an
+#                      invisible gap in the audit trail. This directly
+#                      undermines AU-9 (Protection of Audit Information) and
+#                      PCI DSS Req 10.5.
+#
+#   macOS instability: Full disks prevent OS security updates from downloading
+#                      and installing, undermining SI-2 (Flaw Remediation)
+#                      and PCI DSS Req 6.3.3. macOS also uses disk space for
+#                      virtual memory -- a full disk can cause kernel panics.
+#
+#   SIEM gaps:         If JSON_LOG_FILE is set to a local path, a full disk
+#                      will cause JSON log writes to fail silently, creating
+#                      gaps in the compliance audit trail shipped to the SIEM.
+#
+#   MDM instability:   Kandji and osquery both write to disk. A full disk
+#                      can cause agent failures that make the device appear
+#                      compliant when it is not.
+#
+# Threshold guidance
+# ------------------
+# 15% free is a conservative, widely-used threshold:
+#
+#   macOS minimum:      10% (below this, macOS shows storage warnings)
+#   Recommended:        15% (allows headroom for logs, updates, swap)
+#   Enterprise common:  20% (more headroom for large OS updates)
+#
+# Adjust the percentage threshold in the query to match your policy.
+# For devices with very large disks (>1TB), a fixed minimum (e.g. 50GB)
+# may be more appropriate than a percentage.
+#
+# Compliance mapping
+# ------------------
+# PCI DSS v4.0:
+#   Req 10.5.1  Retain audit logs for at least 12 months -- a full disk
+#               causes audit log loss, directly undermining this requirement.
+#               Monitoring disk space is a prerequisite for log retention.
+#   Req 10.3.2  Audit log files protected from destruction -- a full disk
+#               is a form of audit log destruction via resource exhaustion.
+#   Req 6.3.3   All components protected from known vulnerabilities -- a
+#               full disk prevents OS security patches from downloading and
+#               installing, leaving the device exposed to known CVEs.
+#
+# FedRAMP / NIST 800-53:
+#   AU-4      Audit Log Storage Capacity -- requires the organisation to
+#             allocate audit log storage capacity and configure auditing
+#             to reduce the likelihood of capacity being exceeded. Monitoring
+#             disk space directly supports this control.
+#   AU-5      Response to Audit Processing Failures -- requires alerts when
+#             audit processing fails. A full disk causing auditd to stop is
+#             an audit processing failure that must be detected.
+#   AU-9      Protection of Audit Information -- a full disk can destroy
+#             audit information via resource exhaustion.
+#   SI-2      Flaw Remediation -- OS security updates cannot install on a
+#             full disk, preventing timely flaw remediation.
+#
+# HIPAA:
+#   § 164.312(b)  Audit Controls -- audit logging gaps caused by full disks
+#                 directly undermine the audit controls requirement. Ensuring
+#                 sufficient disk space is a prerequisite for audit integrity.
+#   § 164.308(a)(8)  Evaluation -- continuous monitoring includes verifying
+#                 that the infrastructure supporting security controls
+#                 (including audit logging) is functioning correctly.
+#
+# SOC 2:
+#   A1.1   Capacity planning -- monitoring disk space is a direct
+#          implementation of capacity planning at the endpoint level.
+#   CC7.2  Monitors system components for anomalies -- low disk space is
+#          an anomalous condition that warrants investigation and remediation
+#          before it causes audit log loss or system instability.
+#   CC4.1  Monitors for security breaches -- audit log gaps caused by full
+#          disks can mask security events that occurred during the gap.
+#
+# ISO 27001:2022:
+#   A.8.6   Capacity Management -- requires monitoring and management of
+#           resource capacity to ensure required system performance. Disk
+#           space monitoring at the endpoint level satisfies this control.
+#           This was previously listed as a gap in our ISO 27001 matrix.
+#   A.8.15  Logging -- sufficient disk space is a prerequisite for
+#           continuous and complete endpoint logging.
+#   A.8.8   Management of Technical Vulnerabilities -- a full disk
+#           prevents security patches from installing.
+#
+# Kandji enforcement
+# ------------------
+# Type:          Cannot be directly enforced via Kandji profile
+# Remediation:   Kandji custom script (disk cleanup)
+# Assignment:    All blueprints
+# Verify:        Kandji → Devices → [device] → Storage tab
+#
+# Kandji cannot prevent a disk from becoming full, but can:
+#   1. Alert when disk space drops below a threshold (via custom script
+#      run periodically that sends an alert to Slack or a ticketing system)
+#   2. Run a cleanup script to remove unnecessary files when triggered
+#
+# Example cleanup script for Kandji custom scripts:
+#   #!/bin/bash
+#   # Remove user caches and temporary files
+#   rm -rf ~/Library/Caches/*
+#   rm -rf /private/var/folders/*/C/com.apple.*/
+#   # Remove old log files
+#   find /private/var/log -name "*.log" -mtime +30 -delete
+#   # Report current disk usage
+#   df -h /
+#
+# When this policy fails, the blankpush triggered by drift_check.py will
+# cause the device to check in and pull the cleanup script from Kandji.
+#
+# Resolution
+# ----------
+# If disk space is below the threshold:
+#   1. Check current disk usage: df -h / (look for Use% column)
+#   2. Identify large files: du -sh ~/Library/* | sort -rh | head -20
+#   3. Empty the Trash and clear Downloads folder
+#   4. Remove unused applications
+#   5. Clear Xcode derived data if applicable: rm -rf ~/Library/Developer/Xcode/DerivedData
+#   6. Run macOS Storage Management: Apple menu → About This Mac → Storage → Manage
+#   7. If disk is persistently full, escalate to device replacement or storage upgrade
+
+apiVersion: v1
+kind: policy
+spec:
+  name: Sufficient disk space available (macOS)
+  description: >
+    Checks that the boot disk has at least 15% free space. Low disk space
+    causes audit log loss (auditd stops writing to a full disk), prevents
+    OS security updates from installing, and can destabilise MDM and osquery
+    agents. Satisfies AU-4 (Audit Log Storage Capacity), AU-5 (Audit Processing
+    Failures), PCI DSS Req 10.5.1 (audit log retention), PCI DSS Req 6.3.3
+    (patching), SOC 2 A1.1 (Capacity Planning), and ISO 27001:2022 A.8.6
+    (Capacity Management) — closing the A.8.6 gap in the ISO 27001 matrix.
+    Adjust the 15% threshold in the query to match your policy.
+  query: >
+    SELECT 1 FROM disk_info
+    WHERE type = 'hdd'
+      AND size > 0
+      AND (100.0 * free_space / size) >= 15;
+  resolution: >
+    Disk space is below 15%. Check usage: df -h /
+    Identify large files: du -sh ~/Library/* | sort -rh | head -20
+    Empty Trash, clear Downloads, remove unused apps.
+    Use Apple menu → About This Mac → Storage → Manage for guided cleanup.
+    If persistently full, escalate to device replacement or storage upgrade.
+    A Kandji cleanup script can be triggered via blankpush for automated
+    remediation of temporary files and caches.
+  platform: darwin
+  critical: false

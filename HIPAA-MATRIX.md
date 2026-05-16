@@ -117,6 +117,7 @@ The watched policy list is maintained in `remediation/policies.yml`.
 |---|---|---|---|
 | Audit Controls | Required | Audit logging enabled | `audit-logging-enabled.yml` |
 | Audit Controls | Required | NTP time synchronisation configured | `ntp-configured.yml` |
+| Audit Controls | Required | Sufficient disk space available | `disk-space-available.yml` |
 
 > **§ 164.312(b)** is one of the most commonly cited HIPAA technical safeguard
 > gaps during audits. BSM audit logging satisfies the mechanism requirement.
@@ -143,6 +144,7 @@ The watched policy list is maintained in `remediation/policies.yml`.
 | Authentication | Required | Guest account disabled | `guest-account-disabled.yml` |
 | Authentication | Required | Login window shows name and password fields | `login-window-display.yml` |
 | Authentication | Required | Okta Verify installed | `okta-verify-running.yml` |
+| Authentication | Required | Account lockout configured | `account-lockout-configured.yml` |
 
 ### § 164.312(e) — Transmission Security
 

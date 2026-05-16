@@ -1,0 +1,130 @@
+---
+# account-lockout-configured.yml
+# FleetDM Policy: Account lockout after invalid authentication attempts
+#
+# Verifies that macOS is configured to lock the account after a defined
+# number of consecutive failed authentication attempts, via a managed
+# password policy profile. Account lockout is a primary defence against
+# brute force and credential stuffing attacks on endpoint accounts.
+#
+# PCI DSS v4.0 Req 8.3.4 requires that account lockout be implemented
+# after not more than 10 invalid authentication attempts. The recommended
+# value for most environments is 6 attempts or fewer. FedRAMP High (AC-7)
+# requires lockout after not more than 3 invalid attempts.
+#
+# Configuration guidance
+# ----------------------
+# Set maxFailedAttempts based on your compliance requirements:
+#
+#   FedRAMP High (AC-7):   3 attempts  (most restrictive)
+#   PCI DSS v4.0 Req 8.3.4: 10 attempts (maximum permitted)
+#   General best practice:  6 attempts  (recommended default)
+#
+# The query enforces a maximum of 6 attempts as a reasonable default that
+# satisfies both PCI DSS and FedRAMP requirements. Update the threshold
+# value in the query to match your policy requirement.
+#
+# Compliance mapping
+# ------------------
+# PCI DSS v4.0:
+#   Req 8.3.4   Lock out user IDs after not more than 10 attempts. Once
+#               locked, require either an administrator to unlock the
+#               account or an automated lockout duration of at least 30
+#               minutes. This directly satisfies Req 8.3.4 when combined
+#               with minutesUntilFailedLoginReset in the password policy.
+#   Req 8.3.5   If passwords are used as authentication factors, meet
+#               complexity requirements and enforce lockout as part of
+#               the overall authentication control posture.
+#
+# FedRAMP / NIST 800-53:
+#   AC-7      Unsuccessful Logon Attempts -- requires enforcement of a
+#             limit on consecutive invalid access attempts and automatic
+#             locking or delay of the account or node when the limit is
+#             exceeded. FedRAMP High baseline requires no more than 3
+#             consecutive failed attempts before lockout.
+#   AC-7(2)   Automatic Account Lock -- requires automatic locking of
+#             the account when the limit of consecutive invalid attempts
+#             is reached, for the duration specified in policy.
+#   IA-5(1)   Password-Based Authentication -- lockout is a required
+#             component of the authenticator management control posture
+#             for password-based authentication.
+#
+# HIPAA:
+#   § 164.312(d)  Person or Entity Authentication -- account lockout
+#                 strengthens authentication by preventing unlimited
+#                 brute force attempts against ePHI systems.
+#   § 164.308(a)(5)(ii)(D)  Password Management -- lockout policy is
+#                 a required component of password management procedures
+#                 for systems handling ePHI.
+#
+# SOC 2:
+#   CC6.1  Logical access security -- account lockout prevents brute
+#          force attacks against endpoint credentials, strengthening
+#          logical access controls.
+#   CC6.6  Security against external threats -- lockout limits the
+#          effectiveness of credential stuffing and brute force attacks
+#          originating from external threats.
+#
+# ISO 27001:2022:
+#   A.8.5   Secure Authentication -- account lockout is a required
+#           component of secure authentication implementation, limiting
+#           the risk of unauthorized access via brute force.
+#   A.5.17  Authentication Information -- lockout policy is part of
+#           the authentication information management requirements.
+#
+# Kandji enforcement
+# ------------------
+# Type:          Configuration profile
+# Profile:       Password Policy (Kandji → Library → Password Policy)
+#                or Custom profile with com.apple.mobiledevice.passwordpolicy
+# Assignment:    All blueprints
+# Verify:        Kandji → Library → Password Policy → Max failed attempts set
+#
+# Add to the same password policy profile used for password-complexity.yml:
+#
+#   com.apple.mobiledevice.passwordpolicy payload:
+#     maxFailedAttempts:          6     (or 3 for FedRAMP High)
+#     minutesUntilFailedLoginReset: 30  (lockout duration in minutes)
+#
+# Kandji's native Password Policy library item exposes both settings.
+# Combine with password-complexity.yml in a single profile to avoid
+# profile conflicts — two profiles setting the same payload domain can
+# cause unpredictable behaviour.
+#
+# Resolution
+# ----------
+# If account lockout is not configured:
+#   1. Update the Kandji Password Policy library item to set maxFailedAttempts
+#   2. Also set minutesUntilFailedLoginReset to at least 30 minutes
+#   3. Trigger a blankpush to force the device to pull the updated profile
+#   4. Verify: sudo pwpolicy -getaccountpolicies
+#   5. Test: the lock should trigger after the configured number of failed
+#      attempts at the login window or screensaver password prompt
+
+apiVersion: v1
+kind: policy
+spec:
+  name: Account lockout configured (macOS)
+  description: >
+    Checks that macOS is configured to lock the account after no more than
+    6 consecutive failed authentication attempts via a managed password policy
+    profile. Satisfies PCI DSS v4.0 Req 8.3.4 (account lockout after not more
+    than 10 invalid attempts), FedRAMP AC-7 (Unsuccessful Logon Attempts),
+    HIPAA § 164.312(d) (Person or Entity Authentication), SOC 2 CC6.1, and
+    ISO 27001:2022 A.8.5. For FedRAMP High, set maxFailedAttempts to 3 in the
+    Kandji password policy profile and update the query threshold to match.
+  query: >
+    SELECT 1 FROM managed_policies
+    WHERE domain = 'com.apple.mobiledevice.passwordpolicy'
+      AND name = 'maxFailedAttempts'
+      AND CAST(value AS INTEGER) <= 6
+      AND CAST(value AS INTEGER) > 0;
+  resolution: >
+    Update the Kandji Password Policy library item to set maxFailedAttempts
+    to 6 (or 3 for FedRAMP High) and minutesUntilFailedLoginReset to at least
+    30 minutes. Trigger a blankpush to force the device to pull the updated
+    profile. Verify with: sudo pwpolicy -getaccountpolicies
+    For FedRAMP High, update the query threshold from 6 to 3 to match the
+    AC-7 requirement.
+  platform: darwin
+  critical: true

@@ -24,7 +24,7 @@ The watched policy list is maintained in `remediation/policies.yml`.
 | CC6 — Logical and Physical Access | CC6.1, CC6.2, CC6.3, CC6.6, CC6.7, CC6.8 |
 | CC7 — System Operations | CC7.1, CC7.2, CC7.3 |
 | CC8 — Change Management | CC8.1 |
-| A1 — Availability | A1.2, A1.3 |
+| A1 — Availability | A1.1, A1.2, A1.3 |
 
 ---
 
@@ -62,6 +62,7 @@ The watched policy list is maintained in `remediation/policies.yml`.
 | FileVault recovery key escrowed | `filevault-key-escrowed.yml` | Demonstrates organisational key management |
 | Okta Verify installed | `okta-verify-running.yml` | Device trust gate — only managed compliant devices authenticate |
 | MDM enrollment certificate valid | `mdm-enrollment-valid.yml` | Verifies device management is operational |
+| Account lockout configured | `account-lockout-configured.yml` | Prevents brute force access to endpoint credentials |
 
 ### CC6.2 — Prior to Issuing System Credentials
 
@@ -163,6 +164,12 @@ The watched policy list is maintained in `remediation/policies.yml`.
 ---
 
 ## A1 — Availability
+
+### A1.1 — Capacity Planning
+
+| Policy | File | Contribution |
+|---|---|---|
+| Sufficient disk space available | `disk-space-available.yml` | Monitors endpoint storage capacity — a full disk causes audit log loss and prevents security patches from installing |
 
 ### A1.2 — Recovery Infrastructure
 

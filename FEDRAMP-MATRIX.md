@@ -20,11 +20,12 @@ The watched policy list is maintained in `remediation/policies.yml`.
 | Control Family | Controls Covered |
 |---|---|
 | AC — Access Control | AC-2, AC-2(9), AC-3, AC-4, AC-6, AC-6(1), AC-6(5), AC-11, AC-11(1), AC-17, AC-17(1), AC-18, AC-18(1), AC-19, AC-20 |
-| AU — Audit & Accountability | AU-2, AU-3, AU-8, AU-8(1), AU-8(2), AU-9, AU-12 |
+| AU — Audit & Accountability | AU-2, AU-3, AU-4, AU-5, AU-8, AU-8(1), AU-8(2), AU-9, AU-12 |
 | CA — Security Assessment | CA-7 |
 | CM — Configuration Management | CM-6, CM-7, CM-7(1), CM-7(2), CM-11 |
 | CP — Contingency Planning | CP-9, CP-9(1), CP-10 |
 | IA — Identification & Authentication | IA-2, IA-2(1), IA-2(2), IA-3, IA-5, IA-5(1), IA-11 |
+| AC — Access Control (additional) | AC-7, AC-7(2) |
 | MA — Maintenance | MA-4 |
 | MP — Media Protection | MP-5, MP-7, MP-8 |
 | RA — Risk Assessment | RA-5 |
@@ -46,6 +47,8 @@ The watched policy list is maintained in `remediation/policies.yml`.
 | AC-6 | Least Privilege | No unauthorized local admin accounts | `no-local-admin-accounts.yml` |
 | AC-6(1) | Authorize Access to Security Functions | No unauthorized local admin accounts | `no-local-admin-accounts.yml` |
 | AC-6(5) | Privileged Accounts | No unauthorized local admin accounts | `no-local-admin-accounts.yml` |
+| AC-7 | Unsuccessful Logon Attempts | Account lockout configured | `account-lockout-configured.yml` |
+| AC-7(2) | Automatic Account Lock | Account lockout configured | `account-lockout-configured.yml` |
 | AC-11 | Session Lock | Screen lock enabled | `screen-lock.yml` |
 | AC-11 | Session Lock | Password required after lock | `password-required-after-lock.yml` |
 | AC-11(1) | Pattern-Hiding Displays | Screen lock enabled | `screen-lock.yml` |
@@ -70,6 +73,8 @@ The watched policy list is maintained in `remediation/policies.yml`.
 | AU-8 | Time Stamps | NTP time synchronisation configured | `ntp-configured.yml` |
 | AU-8(1) | Synchronisation with Authoritative Time Source | NTP time synchronisation configured | `ntp-configured.yml` |
 | AU-8(2) | Secondary Authoritative Time Source | NTP time synchronisation configured | `ntp-configured.yml` |
+| AU-4 | Audit Log Storage Capacity | Sufficient disk space available | `disk-space-available.yml` |
+| AU-5 | Response to Audit Processing Failures | Sufficient disk space available | `disk-space-available.yml` |
 | AU-9 | Protection of Audit Information | Audit logging enabled | `audit-logging-enabled.yml` |
 | AU-12 | Audit Record Generation | Audit logging enabled | `audit-logging-enabled.yml` |
 

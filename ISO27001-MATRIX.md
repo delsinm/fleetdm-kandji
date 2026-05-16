@@ -23,7 +23,7 @@ containing the full osquery query, resolution steps, and detailed rationale.
 
 | Theme | Controls Covered |
 |---|---|
-| A.8 — Technological | A.8.1, A.8.2, A.8.3, A.8.5, A.8.7, A.8.8, A.8.9, A.8.13, A.8.15, A.8.16, A.8.17, A.8.20, A.8.23, A.8.24 |
+| A.8 — Technological | A.8.1, A.8.2, A.8.3, A.8.5, A.8.6, A.8.7, A.8.8, A.8.9, A.8.13, A.8.15, A.8.16, A.8.17, A.8.20, A.8.23, A.8.24 |
 | A.5 — Organisational | A.5.17 (partial) |
 | A.6 — People | None — requires HR and training program |
 | A.7 — Physical | None — requires physical security controls |
@@ -94,6 +94,22 @@ implemented based on information access restrictions.
 | Password complexity enforced | `password-complexity.yml` | Password quality requirements |
 | Login window shows name and password fields | `login-window-display.yml` | Strengthens authentication challenge |
 | Okta Verify installed | `okta-verify-running.yml` | Device-bound cryptographic authentication via Okta Device Trust |
+| Account lockout configured | `account-lockout-configured.yml` | Limits brute force risk via authentication attempt lockout |
+
+### A.8.6 — Capacity Management
+
+Requires monitoring and management of resource capacity to ensure required
+system performance. Insufficient disk space causes audit log loss, prevents
+security updates from installing, and can destabilise management agents.
+
+| Policy | File | Contribution |
+|---|---|---|
+| Sufficient disk space available | `disk-space-available.yml` | Monitors boot disk capacity, preventing audit log loss and patch failures |
+
+> **A.8.6 gap closed.** Disk space monitoring at the endpoint level satisfies
+> this control. Pair with SIEM alerting on `policy_failure` events for this
+> policy to ensure low disk space is investigated before it causes audit log
+> gaps.
 
 ### A.8.7 — Protection Against Malware
 
@@ -246,7 +262,6 @@ separate organisational, people, or physical controls:
 | A.6.3 | Awareness and training | Annual security awareness training program |
 | A.6.5 | Responsibilities after termination | Offboarding process (Okta handles access) |
 | A.7.1-7.4 | Physical security | Office physical security controls |
-| A.8.6 | Capacity management | Infrastructure monitoring and scaling |
 | A.8.12 | Data leakage prevention | DLP tooling or CrowdStrike DLP |
 | A.8.25-8.28 | Secure development | SDLC process and secure coding standards |
 

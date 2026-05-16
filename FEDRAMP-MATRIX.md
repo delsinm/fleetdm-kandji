@@ -11,7 +11,7 @@ The watched policy list is maintained in `remediation/policies.yml`.
 
 > **EDR note:** Entries referencing CrowdStrike also apply to Cisco Secure Endpoint
 > and SentinelOne. Substitute the appropriate policy file for your deployed EDR:
-> `edr-crowdstrike-*.yml` → `edr-cisco-secure-endpoint-*.yml` or `edr-sentinelone-*.yml`
+> `crowdstrike-*.yml` → `cisco-secure-endpoint-*.yml` or `sentinelone-*.yml`
 
 ---
 
@@ -19,15 +19,16 @@ The watched policy list is maintained in `remediation/policies.yml`.
 
 | Control Family | Controls Covered |
 |---|---|
-| AC — Access Control | AC-2, AC-2(9), AC-3, AC-4, AC-6, AC-6(1), AC-6(5), AC-11, AC-11(1), AC-17, AC-17(1), AC-19, AC-20 |
+| AC — Access Control | AC-2, AC-2(9), AC-3, AC-4, AC-6, AC-6(1), AC-6(5), AC-11, AC-11(1), AC-17, AC-17(1), AC-18, AC-18(1), AC-19, AC-20 |
 | AU — Audit & Accountability | AU-2, AU-3, AU-8, AU-8(1), AU-8(2), AU-9, AU-12 |
+| CA — Security Assessment | CA-7 |
 | CM — Configuration Management | CM-6, CM-7, CM-7(1), CM-7(2), CM-11 |
 | CP — Contingency Planning | CP-9, CP-9(1), CP-10 |
-| IA — Identification & Authentication | IA-2, IA-5, IA-5(1), IA-11 |
+| IA — Identification & Authentication | IA-2, IA-2(1), IA-2(2), IA-3, IA-5, IA-5(1), IA-11 |
 | MA — Maintenance | MA-4 |
 | MP — Media Protection | MP-5, MP-7, MP-8 |
 | RA — Risk Assessment | RA-5 |
-| SC — System & Communications Protection | SC-7, SC-7(12), SC-8, SC-28, SC-28(1), SC-39 |
+| SC — System & Communications Protection | SC-7, SC-7(12), SC-8, SC-8(1), SC-20, SC-21, SC-22, SC-28, SC-28(1), SC-39 |
 | SI — System & Information Integrity | SI-2, SI-2(2), SI-2(3), SI-3, SI-3(1), SI-3(2), SI-4, SI-7, SI-7(6) |
 
 ---
@@ -53,6 +54,8 @@ The watched policy list is maintained in `remediation/policies.yml`.
 | AC-17 | Remote Access | Screen sharing disabled | `screen-sharing-disabled.yml` |
 | AC-17 | Remote Access | Remote management disabled | `remote-management-disabled.yml` |
 | AC-17(1) | Automated Monitoring / Control | SSH remote login disabled | `ssh-disabled.yml` |
+| AC-18 | Wireless Access | Bluetooth managed via configuration profile | `bluetooth-managed.yml` |
+| AC-18(1) | Authentication and Encryption | Bluetooth managed via configuration profile | `bluetooth-managed.yml` |
 | AC-19 | Access Control for Mobile Devices | AirDrop disabled | `airdrop-disabled.yml` |
 | AC-20 | Use of External Information Systems | AirDrop disabled | `airdrop-disabled.yml` |
 
@@ -73,6 +76,19 @@ The watched policy list is maintained in `remediation/policies.yml`.
 > **AU-8(1) and AU-8(2)** are FedRAMP High baseline required controls not present
 > at Moderate. Configure both a primary (time.nist.gov) and secondary NTP server
 > in the Kandji profile to satisfy AU-8(2).
+
+---
+
+## CA — Security Assessment
+
+| Control | Description | Policy | File |
+|---|---|---|---|
+| CA-7 | Continuous Monitoring | MDM enrollment certificate valid | `mdm-enrollment-valid.yml` |
+
+> **CA-7** requires ongoing monitoring of security controls. The MDM enrollment
+> certificate policy is a meta-control that verifies the enforcement mechanism
+> itself is operational — a device with an expired MDM certificate cannot receive
+> Kandji profiles or blankpushes, creating a silent gap in monitoring coverage.
 
 ---
 
@@ -120,6 +136,11 @@ The watched policy list is maintained in `remediation/policies.yml`.
 |---|---|---|---|
 | IA-2 | Identification and Authentication | Guest account disabled | `guest-account-disabled.yml` |
 | IA-2 | Identification and Authentication | Login window shows name and password fields | `login-window-display.yml` |
+| IA-2 | Identification and Authentication | Okta Verify installed | `okta-verify-running.yml` |
+| IA-2(1) | Multi-Factor Authentication (privileged) | Okta Verify installed | `okta-verify-running.yml` |
+| IA-2(2) | Multi-Factor Authentication (non-privileged) | Okta Verify installed | `okta-verify-running.yml` |
+| IA-3 | Device Identification and Authentication | Okta Verify installed | `okta-verify-running.yml` |
+| IA-3 | Device Identification and Authentication | MDM enrollment certificate valid | `mdm-enrollment-valid.yml` |
 | IA-5 | Authenticator Management | Password complexity enforced | `password-complexity.yml` |
 | IA-5 | Authenticator Management | Login window shows name and password fields | `login-window-display.yml` |
 | IA-5(1) | Password-Based Authentication | Password complexity enforced | `password-complexity.yml` |
@@ -162,6 +183,11 @@ The watched policy list is maintained in `remediation/policies.yml`.
 | SC-7 | Boundary Protection | Firewall enabled | `firewall-enabled.yml` |
 | SC-7(12) | Host-Based Protection | Firewall enabled | `firewall-enabled.yml` |
 | SC-8 | Transmission Confidentiality and Integrity | AirDrop disabled | `airdrop-disabled.yml` |
+| SC-8 | Transmission Confidentiality and Integrity | Bluetooth managed via configuration profile | `bluetooth-managed.yml` |
+| SC-8(1) | Cryptographic Protection | Bluetooth managed via configuration profile | `bluetooth-managed.yml` |
+| SC-20 | Secure Name/Address Resolution Service | DNS filtering configured | `dns-filtering-configured.yml` |
+| SC-21 | Secure Name/Address Resolution (recursive) | DNS filtering configured | `dns-filtering-configured.yml` |
+| SC-22 | Architecture and Provisioning for Name/Address Resolution | DNS filtering configured | `dns-filtering-configured.yml` |
 | SC-28 | Protection of Information at Rest | Disk encryption enabled | `disk-encryption.yml` |
 | SC-28(1) | Cryptographic Protection | FileVault recovery key escrowed | `filevault-key-escrowed.yml` |
 | SC-39 | Process Isolation | System Integrity Protection enabled | `sip-enabled.yml` |

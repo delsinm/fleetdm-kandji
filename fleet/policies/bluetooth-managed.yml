@@ -1,0 +1,145 @@
+---
+# bluetooth-managed.yml
+# FleetDM Policy: Bluetooth managed via configuration profile
+#
+# Verifies that Bluetooth is controlled via a managed configuration profile
+# rather than left to user discretion. For FedRAMP High environments, AC-18
+# (Wireless Access) and SC-8 (Transmission Confidentiality) require that
+# wireless technologies used by the information system are managed and monitored.
+#
+# This policy checks that a managed Bluetooth preference is in place. The
+# specific configuration enforced depends on your security posture:
+#
+#   High security (FedRAMP High, PCI CDE devices):
+#     DisableBluetooth: true  →  Bluetooth completely disabled
+#
+#   Standard security (general workforce):
+#     DisableBluetooth: false, managed: true  →  Bluetooth permitted but
+#     organisation retains control, can disable centrally if needed
+#
+# The query checks for any managed Bluetooth policy -- either disabling
+# Bluetooth or confirming it is under organisational management. For FedRAMP
+# High the recommended configuration is DisableBluetooth: true.
+#
+# Bluetooth risks in a compliance context
+# ----------------------------------------
+# Unmanaged Bluetooth on managed endpoints:
+#   - Enables data transfer to unmanaged/personal devices (exfiltration risk)
+#   - Bluetooth pairing attacks (BIAS, KNOB) can compromise the device
+#   - Bluetooth Low Energy (BLE) can be used for covert tracking
+#   - Bluetooth-based attacks (BlueBorne) have achieved remote code execution
+#
+# Compliance mapping
+# ------------------
+# FedRAMP / NIST 800-53:
+#   AC-18     Wireless Access -- requires identification and authentication
+#             of wireless access to the information system, and authorisation
+#             of wireless access prior to allowing connections. Managing
+#             Bluetooth via MDM profile satisfies the "authorised" requirement.
+#   AC-18(1)  Authentication and Encryption -- Bluetooth connections must be
+#             authenticated and encrypted. Disabling Bluetooth entirely is the
+#             strongest implementation of this control for High baseline.
+#   SC-8      Transmission Confidentiality and Integrity -- Bluetooth
+#             transmissions must be protected. Managing Bluetooth via profile
+#             ensures only authorised pairing can occur.
+#   SC-8(1)   Cryptographic Protection -- requires cryptographic mechanisms
+#             to prevent unauthorised disclosure of information during
+#             transmission. Disabling Bluetooth removes this attack surface.
+#   CM-7      Least Functionality -- disabling or managing Bluetooth removes
+#             unnecessary wireless functionality from the attack surface.
+#   CM-7(1)   Periodic Review -- managed Bluetooth policy ensures Bluetooth
+#             configuration is reviewed and controlled, not ad-hoc.
+#
+# HIPAA:
+#   § 164.312(e)(1)  Transmission Security -- Bluetooth transmissions of ePHI
+#                    must be protected. Managing Bluetooth via profile reduces
+#                    the risk of unintended ePHI transmission over Bluetooth.
+#   § 164.308(a)(1)(ii)(B)  Risk Management -- unmanaged Bluetooth represents
+#                    a known risk that must be addressed in the risk management
+#                    process.
+#
+# SOC 2:
+#   CC6.7  Restricts transmission of confidential information -- managing
+#          Bluetooth prevents uncontrolled transmission of confidential data
+#          to nearby unmanaged devices.
+#   CC6.6  Security against external threats -- Bluetooth attack surface
+#          (pairing attacks, BLE scanning) represents an external threat
+#          that managed Bluetooth controls mitigate.
+#
+# ISO 27001:2022:
+#   A.8.20  Network Security -- Bluetooth is a wireless network interface
+#           that must be secured and managed as part of network security.
+#   A.6.7   Remote Working -- for remote workers, unmanaged Bluetooth in
+#           public locations (airports, cafes) represents a meaningful risk.
+#
+# PCI DSS v4.0:
+#   Req 1.3.2  Restrict inbound and outbound traffic -- Bluetooth represents
+#              an out-of-band data transfer path that must be managed in
+#              cardholder data environments.
+#   Req 12.3   Risk assessment -- unmanaged Bluetooth is a known risk that
+#              must be identified and addressed in the risk assessment.
+#
+# Kandji enforcement
+# ------------------
+# Type:          Configuration profile
+# Profile:       Custom profile — deploy com.apple.Bluetooth payload
+# Assignment:    All blueprints (or CDE-scoped blueprint for high-security devices)
+# Verify:        Kandji → Library → Custom Profiles → Bluetooth profile assigned
+#
+# For FedRAMP High (Bluetooth disabled):
+#   com.apple.Bluetooth payload:
+#     DisableBluetooth: true
+#
+# For standard workforce (Bluetooth managed but permitted):
+#   com.apple.Bluetooth payload:
+#     DisableBluetooth: false
+#     (presence of the managed profile satisfies this policy)
+#
+# Note: DisableBluetooth via MDM profile prevents the user from re-enabling
+# Bluetooth in System Settings while the profile is installed. This is a
+# managed preference -- the toggle will be greyed out in the UI.
+#
+# Note: Disabling Bluetooth will also disable:
+#   - AirDrop (already enforced separately)
+#   - Handoff / Continuity features
+#   - Sidecar (iPad as second display)
+#   - Apple Watch unlock
+# Communicate this impact to users before enabling DisableBluetooth.
+#
+# Resolution
+# ----------
+# If Bluetooth is not managed:
+#   1. Deploy the com.apple.Bluetooth custom profile via Kandji
+#   2. Trigger a blankpush to force the device to pull the profile
+#   3. Verify in System Settings → Bluetooth that the toggle is greyed out
+#      (indicating the managed profile is active)
+#   4. If the profile is assigned but the policy still fails, verify the
+#      managed_policies query domain matches your profile's payload domain
+
+apiVersion: v1
+kind: policy
+spec:
+  name: Bluetooth managed via configuration profile (macOS)
+  description: >
+    Checks that Bluetooth is controlled via a managed configuration profile
+    (com.apple.Bluetooth payload) rather than left to user discretion. For
+    FedRAMP High environments set DisableBluetooth to true; for standard
+    workforce, the presence of a managed Bluetooth profile satisfies this
+    policy. Satisfies AC-18 (Wireless Access) and AC-18(1) — FedRAMP High
+    required controls — SC-8 (Transmission Confidentiality), CM-7 (Least
+    Functionality), HIPAA § 164.312(e)(1) (Transmission Security), SOC 2
+    CC6.7, ISO 27001:2022 A.8.20, and PCI DSS Req 1.3.2.
+  query: >
+    SELECT 1 FROM managed_policies
+    WHERE domain = 'com.apple.Bluetooth'
+      AND name = 'DisableBluetooth';
+  resolution: >
+    Deploy a Kandji custom configuration profile with the com.apple.Bluetooth
+    payload. For FedRAMP High set DisableBluetooth to true. For standard
+    environments, deploying any managed Bluetooth profile satisfies this policy.
+    Trigger a blankpush if the profile is assigned but not yet applied. Verify
+    the Bluetooth toggle is greyed out in System Settings → Bluetooth confirming
+    the managed profile is active. Note: disabling Bluetooth also disables
+    AirDrop, Handoff, Sidecar, and Apple Watch unlock -- communicate this to users.
+  platform: darwin
+  critical: true

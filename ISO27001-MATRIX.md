@@ -1,14 +1,21 @@
 # ISO 27001:2022 Compliance Matrix
 
-This document maps each FleetDM endpoint policy to its corresponding ISO 27001:2022 Annex A controls. ISO 27001 is a management system standard - certification requires both an operational ISMS (clauses 4-10) and implementation of applicable Annex A controls.
+This document maps each FleetDM endpoint policy to its corresponding ISO
+27001:2022 Annex A controls. ISO 27001 is a management system standard --
+certification requires both an operational ISMS (clauses 4-10) and
+implementation of applicable Annex A controls.
 
-Endpoint policies address Theme 4 (Technological Controls) and a small subset of Theme 1 (Organisational Controls). Themes 2 (People) and 3 (Physical) require separate organisational and physical controls not addressable by endpoint policy.
+Endpoint policies address Theme 4 (Technological Controls) and a small
+subset of Theme 1 (Organisational Controls). Themes 2 (People) and 3
+(Physical) require separate organisational and physical controls not
+addressable by endpoint policy.
 
-Each policy has a corresponding YAML definition under `fleet/policies/` containing the full osquery query, resolution steps, and detailed rationale.
+Each policy has a corresponding YAML definition under `fleet/policies/`
+containing the full osquery query, resolution steps, and detailed rationale.
 
 > **EDR note:** Entries referencing CrowdStrike also apply to Cisco Secure Endpoint
 > and SentinelOne. Substitute the appropriate policy file for your deployed EDR:
-> `edr-crowdstrike-*.yml` → `edr-cisco-secure-endpoint-*.yml` or `edr-sentinelone-*.yml`
+> `crowdstrike-*.yml` → `cisco-secure-endpoint-*.yml` or `sentinelone-*.yml`
 
 ---
 
@@ -16,7 +23,7 @@ Each policy has a corresponding YAML definition under `fleet/policies/` containi
 
 | Theme | Controls Covered |
 |---|---|
-| A.8 — Technological | A.8.1, A.8.2, A.8.3, A.8.5, A.8.7, A.8.8, A.8.9, A.8.13, A.8.15, A.8.16, A.8.17, A.8.20, A.8.24 |
+| A.8 — Technological | A.8.1, A.8.2, A.8.3, A.8.5, A.8.7, A.8.8, A.8.9, A.8.13, A.8.15, A.8.16, A.8.17, A.8.20, A.8.23, A.8.24 |
 | A.5 — Organisational | A.5.17 (partial) |
 | A.6 — People | None — requires HR and training program |
 | A.7 — Physical | None — requires physical security controls |
@@ -40,7 +47,9 @@ Each policy has a corresponding YAML definition under `fleet/policies/` containi
 
 ### A.8.1 — User Endpoint Devices
 
-Requires that information processed, stored, or transmitted by user endpoint devices is protected. Policies implementing rules for managing user endpoint devices must be established and applied.
+Requires that information processed, stored, or transmitted by user endpoint
+devices is protected. Policies implementing rules for managing user endpoint
+devices must be established and applied.
 
 | Policy | File | Contribution |
 |---|---|---|
@@ -52,7 +61,8 @@ Requires that information processed, stored, or transmitted by user endpoint dev
 
 ### A.8.2 — Privileged Access Rights
 
-Requires that the allocation and use of privileged access rights be restricted, controlled, managed, and reviewed.
+Requires that the allocation and use of privileged access rights be
+restricted, controlled, managed, and reviewed.
 
 | Policy | File | Contribution |
 |---|---|---|
@@ -61,7 +71,8 @@ Requires that the allocation and use of privileged access rights be restricted, 
 
 ### A.8.3 — Information Access Restriction
 
-Requires that access to information and application system functions be restricted in accordance with the access control policy.
+Requires that access to information and application system functions be
+restricted in accordance with the access control policy.
 
 | Policy | File | Contribution |
 |---|---|---|
@@ -82,6 +93,7 @@ implemented based on information access restrictions.
 | Password required after lock | `password-required-after-lock.yml` | Enforces re-authentication after inactivity |
 | Password complexity enforced | `password-complexity.yml` | Password quality requirements |
 | Login window shows name and password fields | `login-window-display.yml` | Strengthens authentication challenge |
+| Okta Verify installed | `okta-verify-running.yml` | Device-bound cryptographic authentication via Okta Device Trust |
 
 ### A.8.7 — Protection Against Malware
 
@@ -90,24 +102,27 @@ appropriate user awareness.
 
 | Policy | File | Contribution |
 |---|---|---|
-| EDR software running | `edr-*-running.yml` | Primary endpoint malware detection and prevention |
-| EDR software version current | `edr-*-version.yml` | Ensures malware protection is current |
+| CrowdStrike running | `crowdstrike-running.yml` | Primary endpoint malware detection and prevention |
+| CrowdStrike version current | `crowdstrike-version.yml` | Ensures malware protection is current |
 | Gatekeeper enabled | `gatekeeper-enabled.yml` | Prevents execution of unsigned/untrusted software |
 | System Integrity Protection enabled | `sip-enabled.yml` | Prevents system-level malware persistence |
 
 ### A.8.8 — Management of Technical Vulnerabilities
 
-Requires that information about technical vulnerabilities of systems be obtained, the organisation's exposure evaluated, and appropriate measures taken.
+Requires that information about technical vulnerabilities of systems be
+obtained, the organisation's exposure evaluated, and appropriate measures taken.
 
 | Policy | File | Contribution |
 |---|---|---|
 | OS up to date | `os-up-to-date.yml` | Primary patch compliance outcome check |
 | Automatic updates enabled | `auto-updates-enabled.yml` | Ensures device checks for available patches |
-| EDR software version current | `edr-*-version.yml` | Remediates vulnerability in agent software itself |
+| CrowdStrike version current | `crowdstrike-version.yml` | Remediates vulnerability in agent software itself |
 
 ### A.8.9 — Configuration Management
 
-Requires that configurations, including security configurations, of hardware, software, services, and networks be established, documented, implemented, monitored, and reviewed.
+Requires that configurations, including security configurations, of hardware,
+software, services, and networks be established, documented, implemented,
+monitored, and reviewed.
 
 | Policy | File | Contribution |
 |---|---|---|
@@ -121,10 +136,12 @@ Requires that configurations, including security configurations, of hardware, so
 | Gatekeeper enabled | `gatekeeper-enabled.yml` | Verified baseline software execution policy |
 | System Integrity Protection enabled | `sip-enabled.yml` | Verified baseline system integrity configuration |
 | Automatic updates enabled | `auto-updates-enabled.yml` | Verified baseline update mechanism configuration |
+| MDM enrollment certificate valid | `mdm-enrollment-valid.yml` | Verifies configuration management mechanism is operational |
 
 ### A.8.13 — Information Backup
 
-Requires that backup copies of information, software, and system images be taken and tested regularly in accordance with an agreed backup policy.
+Requires that backup copies of information, software, and system images be
+taken and tested regularly in accordance with an agreed backup policy.
 
 | Policy | File | Contribution |
 |---|---|---|
@@ -136,7 +153,8 @@ Requires that backup copies of information, software, and system images be taken
 
 ### A.8.15 — Logging
 
-Requires that logs recording user activities, exceptions, faults, and information security events be produced, stored, protected, and analysed.
+Requires that logs recording user activities, exceptions, faults, and
+information security events be produced, stored, protected, and analysed.
 
 | Policy | File | Contribution |
 |---|---|---|
@@ -145,12 +163,14 @@ Requires that logs recording user activities, exceptions, faults, and informatio
 
 ### A.8.16 — Monitoring Activities
 
-Requires that networks, systems, and applications be monitored for anomalous behaviour and appropriate actions taken to evaluate potential information security incidents.
+Requires that networks, systems, and applications be monitored for anomalous
+behaviour and appropriate actions taken to evaluate potential information
+security incidents.
 
 | Policy | File | Contribution |
 |---|---|---|
-| EDR software running | `edr-*-running.yml` | Continuous endpoint behavioural monitoring |
-| EDR software version current | `edr-*-version.yml` | Ensures monitoring capability is effective |
+| CrowdStrike running | `crowdstrike-running.yml` | Continuous endpoint behavioural monitoring |
+| CrowdStrike version current | `crowdstrike-version.yml` | Ensures monitoring capability is effective |
 | Audit logging enabled | `audit-logging-enabled.yml` | Provides endpoint event data for monitoring |
 
 ### A.8.17 — Clock Synchronisation
@@ -169,7 +189,8 @@ and facilitate incident investigation.
 
 ### A.8.20 — Networks Security
 
-Requires that networks and network devices be secured, managed, and controlled to protect information in systems and applications.
+Requires that networks and network devices be secured, managed, and
+controlled to protect information in systems and applications.
 
 | Policy | File | Contribution |
 |---|---|---|
@@ -180,10 +201,25 @@ Requires that networks and network devices be secured, managed, and controlled t
 | Internet sharing disabled | `internet-sharing-disabled.yml` | Prevents endpoint acting as network relay |
 | Printer sharing disabled | `printer-sharing-disabled.yml` | Removes unnecessary inbound IPP listener |
 | Content caching disabled | `content-caching-disabled.yml` | Prevents unmonitored content relay behaviour |
+| Bluetooth managed via configuration profile | `bluetooth-managed.yml` | Manages wireless network interface at the endpoint |
+
+### A.8.23 — Web Filtering
+
+Requires that access to external websites be managed to reduce exposure to
+malicious content. Previously listed as a gap in this matrix — now covered.
+
+| Policy | File | Contribution |
+|---|---|---|
+| DNS filtering configured | `dns-filtering-configured.yml` | DNS-based filtering blocks malicious domains and enforces web access policy |
+
+> **A.8.23 gap closed.** DNS filtering via a managed profile satisfies this
+> control at the endpoint level. Pair with a network-level DNS filtering policy
+> for full coverage across all devices and network paths.
 
 ### A.8.24 — Use of Cryptography
 
-Requires that rules for the effective use of cryptography, including cryptographic key management, be defined and implemented.
+Requires that rules for the effective use of cryptography, including
+cryptographic key management, be defined and implemented.
 
 | Policy | File | Contribution |
 |---|---|---|
@@ -194,7 +230,8 @@ Requires that rules for the effective use of cryptography, including cryptograph
 
 ## Key Gaps
 
-These Annex A controls are not addressed by endpoint policies and require separate organisational, people, or physical controls:
+These Annex A controls are not addressed by endpoint policies and require
+separate organisational, people, or physical controls:
 
 | Control | Description | Coverage Approach |
 |---|---|---|
@@ -211,14 +248,14 @@ These Annex A controls are not addressed by endpoint policies and require separa
 | A.7.1-7.4 | Physical security | Office physical security controls |
 | A.8.6 | Capacity management | Infrastructure monitoring and scaling |
 | A.8.12 | Data leakage prevention | DLP tooling or CrowdStrike DLP |
-| A.8.23 | Web filtering | DNS filtering or proxy layer |
 | A.8.25-8.28 | Secure development | SDLC process and secure coding standards |
 
 ---
 
 ## ISMS Requirements (Clauses 4-10)
 
-ISO 27001 certification also requires implementing the management system clauses. None of these are addressed by endpoint policies:
+ISO 27001 certification also requires implementing the management system
+clauses. None of these are addressed by endpoint policies:
 
 | Clause | Requirement |
 |---|---|

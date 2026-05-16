@@ -51,7 +51,7 @@ The watched policy list is maintained in `remediation/policies.yml`.
 | Req 5 — Protect Against Malware | Strong | EDR running + version + kernel extension (5.3.3) |
 | Req 6 — Secure Systems and Software | Covered | OS patching, auto-updates, Gatekeeper |
 | Req 7 — Restrict Access | Covered | Least privilege, guest disabled, admin accounts |
-| Req 8 — Identify and Authenticate | Strong | Password complexity, screen lock, session timeout (8.2.8) |
+| Req 8 — Identify and Authenticate | Strong | Password, screen lock, session timeout, MFA (Okta Verify) |
 | Req 10 — Log and Monitor | Strong | Audit logging + flags configured + NTP |
 | Req 11 — Test Security | Covered | Drift check provides continuous automated testing |
 | Req 12 — Organisational Policies | Gap | Policies, training, incident response are organisational |
@@ -71,6 +71,8 @@ The watched policy list is maintained in `remediation/policies.yml`.
 | 1.3.2 | Restrict inbound traffic to only necessary communications | Internet sharing disabled | `internet-sharing-disabled.yml` |
 | 1.3.2 | Restrict inbound traffic to only necessary communications | Printer sharing disabled | `printer-sharing-disabled.yml` |
 | 1.3.2 | Restrict inbound traffic to only necessary communications | Content caching disabled | `content-caching-disabled.yml` |
+| 1.3.2 | Restrict inbound traffic to only necessary communications | Bluetooth managed via configuration profile | `bluetooth-managed.yml` |
+| 1.3.2 | Restrict inbound traffic to only necessary communications | DNS filtering configured | `dns-filtering-configured.yml` |
 
 ---
 
@@ -190,6 +192,13 @@ The watched policy list is maintained in `remediation/policies.yml`.
 | 8.3.6 | Minimum password complexity requirements | Password complexity enforced | `password-complexity.yml` |
 | 8.3.9 | Passwords/passphrases changed at least once every 90 days | Password complexity enforced | `password-complexity.yml` |
 
+### 8.4 — Multi-Factor Authentication
+
+| Sub-requirement | Description | Policy | File |
+|---|---|---|---|
+| 8.4.2 | MFA implemented for all access into the CDE | Okta Verify installed | `okta-verify-running.yml` |
+| 8.4.3 | MFA implemented for all remote network access | Okta Verify installed | `okta-verify-running.yml` |
+
 ### 8.6 — System and Application Accounts Managed
 
 | Sub-requirement | Description | Policy | File |
@@ -241,6 +250,7 @@ The watched policy list is maintained in `remediation/policies.yml`.
 | 10.7.2 | Failures of critical security controls detected and reported promptly | Audit logging enabled | `audit-logging-enabled.yml` |
 | 10.7.2 | Failures of critical security controls detected and reported promptly | Firewall enabled | `firewall-enabled.yml` |
 | 10.7.2 | Failures of critical security controls detected and reported promptly | Endpoint backup agent running | `backup-agent-running.yml` |
+| 10.7.2 | Failures of critical security controls detected and reported promptly | MDM enrollment certificate valid | `mdm-enrollment-valid.yml` |
 
 ---
 

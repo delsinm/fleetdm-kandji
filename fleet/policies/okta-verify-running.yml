@@ -1,0 +1,115 @@
+---
+# okta-verify-running.yml
+# FleetDM Policy: Okta Verify agent running
+#
+# Verifies that the Okta Verify application is installed and present on the
+# endpoint. Okta Verify is the primary mechanism for Okta Device Trust --
+# it registers the device with Okta and provides the cryptographic proof of
+# device health that gates access to Okta-protected applications.
+#
+# Without Okta Verify:
+#   - Device Trust policies in Okta cannot evaluate the device
+#   - Access to applications requiring Device Trust will be blocked or
+#     fall back to a less secure authentication path
+#   - The identity layer of the compliance architecture is incomplete
+#
+# This policy checks for the Okta Verify app bundle. For a stronger check,
+# also verify the OktaHelper process is running (the background agent that
+# communicates device posture to Okta):
+#
+#   SELECT 1 FROM processes WHERE name = 'OktaHelper';
+#
+# Both checks together confirm Okta Verify is installed AND actively running.
+#
+# Compliance mapping
+# ------------------
+# FedRAMP / NIST 800-53:
+#   IA-2      Identification and Authentication -- Okta Verify provides the
+#             device-bound authentication factor required for multi-factor
+#             authentication to federal systems.
+#   IA-2(1)   Multi-Factor Authentication (privileged) -- Okta Verify is
+#             the primary MFA mechanism for privileged user access.
+#   IA-2(2)   Multi-Factor Authentication (non-privileged) -- Okta Verify
+#             satisfies the MFA requirement for all user accounts.
+#   IA-3      Device Identification and Authentication -- Okta Device Trust
+#             uses Okta Verify to cryptographically authenticate the device
+#             itself, not just the user, before granting access.
+#   AC-17     Remote Access -- Okta Verify enforces device trust as a
+#             condition of remote access to protected resources.
+#   AC-17(1)  Automated Monitoring and Control -- Okta Verify continuously
+#             evaluates device posture and can revoke access dynamically.
+#   SC-8      Transmission Confidentiality and Integrity -- Okta Verify
+#             uses certificate-based device attestation to protect the
+#             authentication channel.
+#
+# HIPAA:
+#   § 164.312(d)  Person or Entity Authentication -- Okta Verify provides
+#                 device-bound authentication satisfying the person or entity
+#                 authentication requirement for systems handling ePHI.
+#   § 164.312(a)(2)(i)  Unique User Identification -- Okta Verify ties
+#                 authentication to a specific registered device, strengthening
+#                 unique user identification.
+#
+# SOC 2:
+#   CC6.1  Logical access security -- Okta Verify enforces device trust as
+#          a condition of logical access, ensuring only managed, compliant
+#          devices can authenticate to protected systems.
+#   CC6.6  Security against external threats -- device trust gated on Okta
+#          Verify prevents access from unmanaged or compromised devices.
+#
+# ISO 27001:2022:
+#   A.8.5   Secure Authentication -- Okta Verify implements device-bound
+#           cryptographic authentication, satisfying the secure authentication
+#           control for access to sensitive systems.
+#   A.5.17  Authentication Information -- Okta Verify manages device
+#           credentials and certificates used for authentication.
+#
+# Kandji enforcement
+# ------------------
+# Type:          Custom App / library item
+# Item:          Okta Verify installer pkg
+# Assignment:    All blueprints
+# Verify:        Kandji → Library → Custom Apps → Okta Verify assigned
+#
+# Download the Okta Verify installer from your Okta admin console:
+#   Okta Admin → Settings → Downloads → Okta Verify for macOS
+#
+# After deployment, configure Device Trust in Okta:
+#   Okta Admin → Security → Device Trust → macOS → Enable
+#
+# Okta Verify requires Full Disk Access on macOS for certificate operations.
+# Deploy a PPPC profile via Kandji granting Full Disk Access to Okta Verify.
+#
+# Resolution
+# ----------
+# If Okta Verify is not installed:
+#   1. Re-deploy via Kandji Custom App library item via blankpush
+#   2. Verify the pkg is assigned in the device's blueprint
+#   3. Check Okta Admin → Devices to confirm device registration status
+#   4. If installed but not registered, open Okta Verify manually and
+#      complete the device registration flow
+#   5. Verify PPPC Full Disk Access profile is applied in Kandji
+
+apiVersion: v1
+kind: policy
+spec:
+  name: Okta Verify installed (macOS)
+  description: >
+    Checks that Okta Verify is installed on the endpoint. Okta Verify is
+    required for Okta Device Trust -- without it, device health cannot be
+    evaluated and access to Device Trust-protected applications may be blocked
+    or fall back to a less secure path. Satisfies IA-2 (Multi-Factor
+    Authentication), IA-3 (Device Identification and Authentication), AC-17
+    (Remote Access), HIPAA § 164.312(d) (Person or Entity Authentication),
+    SOC 2 CC6.1, and ISO 27001:2022 A.8.5.
+  query: >
+    SELECT 1 FROM apps
+    WHERE name = 'Okta Verify.app';
+  resolution: >
+    Re-deploy Okta Verify via the Kandji Custom App library item. Verify the
+    pkg is assigned in the device's Kandji blueprint. After installation, open
+    Okta Verify and complete the device registration flow. Check Okta Admin →
+    Devices to confirm the device is registered and trusted. Ensure a PPPC
+    Full Disk Access profile is applied in Kandji for Okta Verify.
+  platform: darwin
+  critical: true

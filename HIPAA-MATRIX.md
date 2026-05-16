@@ -25,11 +25,11 @@ The watched policy list is maintained in `remediation/policies.yml`.
 | § 164.308(a)(7) | Contingency Plan | Covered — backup agent running |
 | § 164.308(a)(8) | Evaluation | Covered — continuous monitoring via Fleet |
 | § 164.310(d) | Device and Media Controls | Covered — encryption, AirDrop, backup |
-| § 164.312(a) | Access Control | Covered — guest, admin, screen lock, password |
+| § 164.312(a) | Access Control | Strong — guest, admin, screen lock, password, Okta Verify |
 | § 164.312(b) | Audit Controls | Covered — BSM audit logging, NTP |
-| § 164.312(c) | Integrity | Covered — SIP, Gatekeeper |
-| § 164.312(d) | Person or Entity Authentication | Covered — password complexity, lock |
-| § 164.312(e) | Transmission Security | Covered — firewall, SSH, screen sharing |
+| § 164.312(c) | Integrity | Covered — SIP, Gatekeeper, MDM enrollment |
+| § 164.312(d) | Person or Entity Authentication | Strong — password, lock, Okta Verify |
+| § 164.312(e) | Transmission Security | Strong — firewall, SSH, screen sharing, Bluetooth, DNS |
 
 ---
 
@@ -130,6 +130,7 @@ The watched policy list is maintained in `remediation/policies.yml`.
 | (1) Integrity | Required | System Integrity Protection enabled | `sip-enabled.yml` |
 | (1) Integrity | Required | Gatekeeper enabled | `gatekeeper-enabled.yml` |
 | (1) Integrity | Required | Disk encryption enabled | `disk-encryption.yml` |
+| (1) Integrity | Required | MDM enrollment certificate valid | `mdm-enrollment-valid.yml` |
 | (2) Mechanism to Authenticate ePHI | Addressable | Password complexity enforced | `password-complexity.yml` |
 | (2) Mechanism to Authenticate ePHI | Addressable | Password required after lock | `password-required-after-lock.yml` |
 
@@ -141,6 +142,7 @@ The watched policy list is maintained in `remediation/policies.yml`.
 | Authentication | Required | Password required after lock | `password-required-after-lock.yml` |
 | Authentication | Required | Guest account disabled | `guest-account-disabled.yml` |
 | Authentication | Required | Login window shows name and password fields | `login-window-display.yml` |
+| Authentication | Required | Okta Verify installed | `okta-verify-running.yml` |
 
 ### § 164.312(e) — Transmission Security
 
@@ -153,6 +155,8 @@ The watched policy list is maintained in `remediation/policies.yml`.
 | (1) Transmission Security | Required | Internet sharing disabled | `internet-sharing-disabled.yml` |
 | (1) Transmission Security | Required | Printer sharing disabled | `printer-sharing-disabled.yml` |
 | (1) Transmission Security | Required | Content caching disabled | `content-caching-disabled.yml` |
+| (1) Transmission Security | Required | Bluetooth managed via configuration profile | `bluetooth-managed.yml` |
+| (1) Transmission Security | Required | DNS filtering configured | `dns-filtering-configured.yml` |
 | (2)(ii) Encryption in Transit | Addressable | AirDrop disabled | `airdrop-disabled.yml` |
 | (2)(ii) Encryption in Transit | Addressable | FileVault recovery key escrowed | `filevault-key-escrowed.yml` |
 

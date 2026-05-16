@@ -1,0 +1,124 @@
+---
+# mdm-enrollment-valid.yml
+# FleetDM Policy: MDM enrollment certificate valid and current
+#
+# Verifies that the device has a valid, non-expired MDM enrollment certificate
+# issued by Kandji. This confirms the device is actively enrolled in MDM and
+# the enrollment has not lapsed, been revoked, or expired.
+#
+# Why this matters
+# ----------------
+# An enrolled device with an expired or missing MDM certificate:
+#   - Cannot receive new configuration profiles from Kandji
+#   - Cannot receive blankpushes (our remediation mechanism breaks)
+#   - Appears compliant in Kandji's device list but is not manageable
+#   - Will silently fail to enforce any new security controls
+#
+# This is a meta-control: it verifies that the enforcement mechanism itself
+# (Kandji MDM) is functioning on the device. Without a valid MDM enrollment,
+# all other Kandji-enforced controls are potentially at risk.
+#
+# The query checks for a certificate with "Kandji" in the issuer field that
+# has not yet expired. Adjust the issuer pattern if your Kandji instance uses
+# a custom PKI configuration.
+#
+# Compliance mapping
+# ------------------
+# FedRAMP / NIST 800-53:
+#   CA-7      Continuous Monitoring -- verifies the monitoring and enforcement
+#             mechanism itself is operational. A device with an expired MDM
+#             certificate is a gap in continuous monitoring coverage.
+#   CM-6      Configuration Settings -- MDM enrollment is the mechanism by
+#             which configuration settings are enforced. An expired enrollment
+#             certificate means configuration settings may not be enforced.
+#   CM-8      Information System Component Inventory -- devices with expired
+#             MDM certificates may not be accurately reflected in the managed
+#             device inventory.
+#   SI-7      Software, Firmware, and Information Integrity -- MDM enrollment
+#             is required for integrity verification of endpoint configuration.
+#             An expired certificate breaks the integrity verification chain.
+#   IA-3      Device Identification and Authentication -- the MDM enrollment
+#             certificate is the primary mechanism by which Kandji authenticates
+#             the device. An expired certificate breaks device authentication.
+#
+# HIPAA:
+#   § 164.308(a)(8)  Evaluation -- continuous evaluation of security controls
+#                    requires that the enforcement mechanism (MDM) is operational.
+#                    An expired enrollment certificate undermines evaluation.
+#   § 164.308(a)(1)  Security Management Process -- a device with an expired
+#                    MDM certificate represents an unmanaged risk that must be
+#                    identified and addressed.
+#
+# SOC 2:
+#   CC7.2  Monitors system components for anomalies -- an expired MDM
+#          certificate is an anomaly in the device management system that
+#          warrants investigation and remediation.
+#   CC6.1  Logical access security -- MDM enrollment enforces logical access
+#          controls on the device. An expired certificate weakens this control.
+#
+# ISO 27001:2022:
+#   A.8.9   Configuration Management -- MDM enrollment is required for
+#           configuration management to function. An expired certificate
+#           breaks the configuration management chain.
+#   A.8.1   User Endpoint Devices -- management of endpoint devices requires
+#           a valid MDM enrollment. An expired certificate means the device
+#           is effectively unmanaged.
+#
+# Kandji enforcement
+# ------------------
+# Type:          Kandji re-enrollment (cannot be enforced via standard profile)
+# Assignment:    All blueprints
+# Verify:        Kandji → Devices → [device] → MDM Profile → Status: Enrolled
+#
+# If an MDM enrollment certificate expires or is revoked, the device must be
+# re-enrolled. This cannot be done automatically via blankpush -- the blankpush
+# mechanism itself relies on the enrollment certificate being valid.
+#
+# To re-enroll a device with an expired certificate:
+#   Option A (preferred): Remove and re-enroll via Kandji Enrollment:
+#     1. In Kandji, remove the device from management
+#     2. Re-enroll via Automated Device Enrollment (ADE/DEP) or
+#        manual enrollment profile
+#   Option B: If the device is physically accessible:
+#     1. Open System Settings → Privacy & Security → Profiles
+#     2. Remove the expired Kandji MDM profile
+#     3. Re-enroll via your organisation's enrollment URL
+#
+# Resolution
+# ----------
+# If the MDM enrollment certificate is missing or expired:
+#   1. Check Kandji → Devices to confirm enrollment status
+#   2. Verify the device is not listed as "Unenrolled" or "Removed"
+#   3. If enrollment is valid in Kandji but this policy fails, the certificate
+#      issuer pattern may not match -- verify with:
+#      security find-certificate -a -p | openssl x509 -text | grep -i kandji
+#   4. Re-enroll the device if enrollment is confirmed expired
+#   5. Note: a blankpush will NOT fix an expired MDM certificate -- the device
+#      must be physically re-enrolled or re-enrolled via ADE/DEP
+
+apiVersion: v1
+kind: policy
+spec:
+  name: MDM enrollment certificate valid (macOS)
+  description: >
+    Checks that the device has a valid, non-expired MDM enrollment certificate
+    issued by Kandji. This is a meta-control verifying the enforcement mechanism
+    itself is operational -- a device with an expired MDM certificate cannot
+    receive Kandji profiles or blankpushes, silently breaking all other
+    Kandji-enforced controls. Satisfies CA-7 (Continuous Monitoring), CM-6
+    (Configuration Settings), IA-3 (Device Identification and Authentication),
+    HIPAA § 164.308(a)(8) (Evaluation), SOC 2 CC7.2, and ISO 27001:2022 A.8.9.
+    Note: a blankpush cannot fix an expired enrollment -- re-enrollment is required.
+  query: >
+    SELECT 1 FROM certificates
+    WHERE issuer LIKE '%Kandji%'
+      AND not_valid_after > strftime('%s', 'now');
+  resolution: >
+    An expired or missing MDM enrollment certificate cannot be fixed via
+    blankpush. Check Kandji → Devices to confirm enrollment status. If expired,
+    re-enroll the device via Automated Device Enrollment (ADE/DEP) or manual
+    enrollment. If the policy fails despite valid Kandji enrollment, verify the
+    certificate issuer matches the query pattern:
+    security find-certificate -a -p | openssl x509 -text | grep -i kandji
+  platform: darwin
+  critical: true

@@ -7,7 +7,7 @@ This system provides automated endpoint compliance monitoring and remediation by
 | Component | File | Trigger | Purpose |
 |---|---|---|---|
 | Drift check | `drift_check.py` | GitHub Actions hourly, 24/7 | Poll Fleet, remediate via Kandji, alert Slack |
-| Webhook handler | `archive/fleet_remediation.py` | Fleet webhook (not deployed) | Real-time handler — archived, production-ready |
+| Webhook handler | `archive/fleet_remediation.py` | Fleet webhook (not deployed) | Real-time handler — archived |
 
 See `archive/README.md` for context on when to deploy the webhook handler.
 

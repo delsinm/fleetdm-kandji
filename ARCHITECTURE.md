@@ -280,11 +280,13 @@ jobs:
 | 200 failing devices | ~203 | ~2-3 minutes |
 | All 600 devices failing | ~603 | ~6-7 minutes |
 
-Kandji rate limit: 300 requests/minute. 
-Per-service timeouts: 
-Fleet (5, 10)s 
-Kandji (5, 15)s Slack (5, 10)s 
-GitHub Actions job timeout: 6 hours (not a practical concern at these volumes).
+**Rate Limits:**
+
+* Kandji rate limit: 300 requests/minute. 
+* Per-service timeouts: 
+** Fleet (5, 10)s 
+** Kandji (5, 15)s Slack (5, 10)s 
+** GitHub Actions job timeout: 6 hours (not a practical concern at these volumes).
 
 ---
 

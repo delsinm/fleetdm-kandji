@@ -55,6 +55,13 @@
 #   CC7.2  Monitors system components for anomalies -- agent effectiveness
 #          depends on running a current, supported version.
 #
+#
+# PCI DSS v4.0:
+#   Req 5.3.1   Anti-malware mechanisms kept current — version check verifies
+#               agent is on a supported, current release
+#   Req 6.3.3   All components protected from known vulnerabilities — outdated
+#               EDR may contain known agent vulnerabilities
+#
 # ISO 27001:2022:
 #   A.8.7   Protection Against Malware -- malware protection mechanisms must
 #           be kept current. An outdated Falcon agent may lack detection

@@ -40,6 +40,15 @@
 #          uncontrolled paths to unmanaged devices.
 #
 #
+#
+# PCI DSS v4.0:
+#   Req 1.3.2   Restrict inbound and outbound traffic — internet sharing creates
+#               an uncontrolled network relay
+#   Req 1.3.4   Outbound traffic from CDE restricted — internet sharing enables
+#               traffic routing outside approved paths
+#   Req 2.2.4   Only necessary services enabled — internet sharing is not
+#               required for CDE operations
+#
 # ISO 27001:2022:
 #   A.8.20  Networks Security -- internet sharing turns an endpoint into
 #           an unmonitored network relay, bypassing network security controls

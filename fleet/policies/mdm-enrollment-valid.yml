@@ -56,6 +56,13 @@
 #   CC6.1  Logical access security -- MDM enrollment enforces logical access
 #          controls on the device. An expired certificate weakens this control.
 #
+#
+# PCI DSS v4.0:
+#   Req 10.7.2  Failures of critical security controls detected promptly —
+#               expired MDM certificate means security controls may not be enforced
+#   Req 12.3.4  Hardware and software technologies reviewed regularly — MDM
+#               enrollment status is a critical technology health check
+#
 # ISO 27001:2022:
 #   A.8.9   Configuration Management -- MDM enrollment is required for
 #           configuration management to function. An expired certificate

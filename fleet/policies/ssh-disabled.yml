@@ -51,6 +51,15 @@
 #          unauthorised remote access attempts via this protocol.
 #
 #
+#
+# PCI DSS v4.0:
+#   Req 1.3.2   Restrict inbound traffic — SSH opens an inbound port that must
+#               be disabled when not required
+#   Req 2.2.4   Only necessary services enabled — SSH remote login is not
+#               required for endpoint CDE operations
+#   Req 2.2.7   All non-console administrative access encrypted — disabling SSH
+#               removes the primary remote admin attack surface
+#
 # ISO 27001:2022:
 #   A.8.20  Networks Security -- unnecessary network services must be
 #           disabled. SSH on managed endpoints is a non-essential inbound

@@ -31,6 +31,13 @@
 #          or tampered system-level software from executing.
 #
 #
+#
+# PCI DSS v4.0:
+#   Req 11.5.2  Change detection mechanism deployed — SIP detects and prevents
+#               unauthorised modification of system files
+#   Req 6.3.3   All components protected from known vulnerabilities — SIP
+#               prevents exploitation of system-level vulnerabilities
+#
 # ISO 27001:2022:
 #   A.8.9   Configuration Management -- SIP enforces the integrity of
 #           system-level configuration by preventing unauthorised

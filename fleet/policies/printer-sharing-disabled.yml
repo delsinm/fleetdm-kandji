@@ -40,6 +40,13 @@
 #          weakening access controls.
 #
 #
+#
+# PCI DSS v4.0:
+#   Req 1.3.2   Restrict inbound traffic — printer sharing opens an inbound IPP
+#               listener on the endpoint
+#   Req 2.2.4   Only necessary services enabled — printer sharing is not
+#               required for CDE operations
+#
 # ISO 27001:2022:
 #   A.8.20  Networks Security -- printer sharing opens an unnecessary inbound
 #           network listener (IPP port 631). Disabling reduces the endpoint

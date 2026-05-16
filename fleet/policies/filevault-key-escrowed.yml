@@ -44,6 +44,13 @@
 # that key escrow is enabled in the FileVault configuration profile.
 #
 #
+#
+# PCI DSS v4.0:
+#   Req 3.7.1   Key management procedures implemented for cryptographic keys —
+#               FileVault key escrow to Kandji satisfies organisational key management
+#   Req 3.7.4   Cryptographic key changes performed when keys reach end of
+#               cryptoperiod — escrowed keys can be rotated centrally
+#
 # ISO 27001:2022:
 #   A.8.24  Use of Cryptography -- key management is an explicit requirement
 #           of cryptography policy. Escrowed recovery keys demonstrate that

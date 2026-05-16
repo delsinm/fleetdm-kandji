@@ -65,6 +65,13 @@
 #          leading indicator of increased breach risk.
 #
 #
+#
+# PCI DSS v4.0:
+#   Req 6.3.3   All system components protected from known vulnerabilities — OS
+#               version check verifies patches applied
+#   Req 6.3.1   Security vulnerabilities identified and risk ranked — OS
+#               currency is primary vulnerability management outcome
+#
 # ISO 27001:2022:
 #   A.8.8   Management of Technical Vulnerabilities -- requires that
 #           technical vulnerabilities are identified and remediated in

@@ -53,6 +53,13 @@
 #          anomalous behaviour in monitoring tools.
 #
 #
+#
+# PCI DSS v4.0:
+#   Req 1.3.2   Restrict inbound and outbound traffic — content caching creates
+#               an unmonitored relay service
+#   Req 2.2.4   Only necessary services, protocols, and daemons enabled —
+#               content caching is not required for CDE operations
+#
 # ISO 27001:2022:
 #   A.8.20  Networks Security -- content caching opens inbound listeners
 #           and creates relay behaviour that bypasses standard network

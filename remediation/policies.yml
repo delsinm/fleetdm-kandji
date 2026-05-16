@@ -5,17 +5,23 @@
 #
 # To add or remove a policy, edit this file and commit -- no code change needed.
 # Each policy name corresponds to a YAML definition under fleet/policies/.
-# See FEDRAMP-MATRIX.md, HIPAA-MATRIX.md, SOC2-MATRIX.md for framework mapping.
+# See FEDRAMP-MATRIX.md, HIPAA-MATRIX.md, SOC2-MATRIX.md, ISO27001-MATRIX.md,
+# GDPR-MATRIX.md, and PCI-DSS-MATRIX.md for full framework mapping.
 #
 # Compliance coverage summary
 # ---------------------------
 # FedRAMP / NIST 800-53:  AC-2, AC-3, AC-4, AC-6, AC-11, AC-17, AC-19, AC-20,
-#                          AU-2, AU-3, AU-8, AU-8(1), AU-9, AU-12, CM-6, CM-7,
-#                          CM-7(1), CM-11, IA-2, IA-5, MA-4, MP-5, MP-7, MP-8,
-#                          RA-5, SC-7, SC-8, SC-28, SC-39, SI-2, SI-3, SI-7
+#                          AU-2, AU-3, AU-8, AU-8(1), AU-8(2), AU-9, AU-12,
+#                          CM-6, CM-7, CM-7(1), CM-11, CP-9, CP-10,
+#                          IA-2, IA-5, MA-4, MP-5, MP-7, MP-8, RA-5,
+#                          SC-7, SC-8, SC-28, SC-39, SI-2, SI-3, SI-7
 # HIPAA:                   § 164.306, § 164.308, § 164.310, § 164.312
 # SOC 2 (TSC):             CC6.1, CC6.2, CC6.3, CC6.6, CC6.7, CC6.8,
-#                          CC7.1, CC7.2, CC7.3, CC8.1, A1.2
+#                          CC7.1, CC7.2, CC7.3, CC8.1, A1.2, A1.3
+# ISO 27001:2022:          A.8.1, A.8.2, A.8.3, A.8.5, A.8.7, A.8.8,
+#                          A.8.9, A.8.13, A.8.15, A.8.16, A.8.17, A.8.20, A.8.24
+# GDPR:                    Art. 5, 25, 32, 33, 34
+# PCI DSS v4.0:            Req 1, 2, 3, 5, 6, 7, 8, 10, 11
 
 policies:
   # --- Malware & Threat Detection ----------------------------------
@@ -40,6 +46,9 @@ policies:
 
   # SI-3, SI-2 | HIPAA § 164.308(a)(5)(ii)(B) | SOC 2 CC6.8
   - CrowdStrike version current (macOS)
+
+  # SI-3(1), SC-39 | PCI DSS Req 5.3.3 | SOC 2 CC6.8
+  - CrowdStrike kernel extension loaded (macOS)
 
   # --- Option B: Cisco Secure Endpoint (uncomment to use instead) --
 
@@ -132,6 +141,21 @@ policies:
   # AU-2, AU-3, AU-12 | HIPAA § 164.312(b) | SOC 2 CC7.3
   - Audit logging enabled (macOS)
 
+  # AU-2, AU-3, AU-12 | PCI DSS Req 10.2.1 | SOC 2 CC7.3
+  - BSM audit flags configured (macOS)
+
   # AU-8, AU-8(1), AU-8(2) | HIPAA § 164.312(b) | SOC 2 CC7.2, CC7.3 | ISO A.8.17
   # Required for FedRAMP High (AU-8(1) is a High baseline control)
   - NTP time synchronisation configured (macOS)
+
+  # --- Backup & Recovery -------------------------------------------
+
+  # CP-9, CP-10 | HIPAA § 164.308(a)(7)(ii)(A) | SOC 2 A1.2
+  - Endpoint backup agent running (macOS)
+
+  # --- PCI DSS Specific --------------------------------------------
+  # These policies exist specifically to satisfy PCI DSS v4.0 requirements
+  # that are not fully covered by the general baseline policies above.
+
+  # PCI Req 8.2.8 | AC-11 | HIPAA § 164.312(a)(2)(iii)
+  - PCI session idle timeout configured (macOS)

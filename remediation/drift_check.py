@@ -643,7 +643,7 @@ def run() -> None:
     device to check in and re-enforce all blueprint controls at once, so pushing
     the same device multiple times per run is wasteful and burns Kandji API quota.
 
-    Worst-case Kandji API calls with 600 devices and 11 policies all failing:
+    Worst-case Kandji API calls with 600 devices and 32 policies all failing:
         build_device_cache:  ~2 calls  (paginated device list)
         blankpushes:         600 calls (one per unique device)
         total:               ~602 calls (~2 minutes at 300 req/min limit)

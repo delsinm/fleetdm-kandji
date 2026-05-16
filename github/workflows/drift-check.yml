@@ -6,16 +6,38 @@
 # currently failing watched policies and issuing Kandji blankpushes to
 # remediate them. Posts a summary to Slack if any drift is found.
 #
-# Schedule: hourly, 24/7 — no time restriction.
+# Schedule: hourly, 24/7 — continuous monitoring, no time restriction.
 # Continuous monitoring satisfies CA-7 (FedRAMP), CC7.2 (SOC 2), and
 # equivalent requirements across HIPAA and ISO 27001. Clean runs produce
 # no Slack message so off-hours execution has no operational impact.
 #
-# Secrets required (set under Settings → Secrets and variables → Actions):
+# Log shipping (SIEM)
+# -------------------
+# The drift check emits structured JSON to JSON_LOG_FILE, which is uploaded
+# to your SIEM at the end of every run. Enable the shipping step for your
+# SIEM by uncommenting the relevant block and adding the required secret.
+#
+# Supported SIEMs:
+#   Splunk HEC        →  add secret: SPLUNK_HEC_TOKEN, SPLUNK_HEC_URL
+#   Datadog           →  add secret: DATADOG_API_KEY
+#   Elastic           →  add secret: ELASTIC_API_KEY, ELASTIC_ENDPOINT
+#   Google SecOps     →  add secret: GOOGLE_SECOPS_API_KEY, GOOGLE_SECOPS_CUSTOMER_ID
+#   Sumo Logic        →  add secret: SUMO_HTTP_SOURCE_URL
+#   AWS CloudWatch    →  add secret: AWS_ROLE_ARN (OIDC, no long-lived credentials)
+#
+# Retention and protection
+# ------------------------
+# JSON logs are written to a temp file during the run and uploaded to your
+# SIEM immediately after. The SIEM becomes the system of record for audit
+# evidence -- logs are retained and protected per your SIEM's configuration,
+# independent of GitHub Actions' 90-day run log retention limit.
+# This satisfies AU-9 (log protection) and AU-11 (log retention) for FedRAMP.
+#
+# Secrets required (Settings → Secrets and variables → Actions):
 #   FLEET_URL          Base URL of your Fleet server
 #   FLEET_API_TOKEN    Fleet API bearer token
 #   SLACK_BOT_TOKEN    Slack bot token (xoxb-)
-#   SLACK_CHANNEL_ID   Slack channel ID for #it-security
+#   SLACK_CHANNEL_ID   Channel ID for your configured Slack channel
 #   KANDJI_API_TOKEN   Kandji API bearer token
 #   KANDJI_SUBDOMAIN   Kandji subdomain (e.g. "acme" for acme.api.kandji.io)
 #
@@ -69,4 +91,280 @@ jobs:
           SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
           KANDJI_API_TOKEN: ${{ secrets.KANDJI_API_TOKEN }}
           KANDJI_SUBDOMAIN: ${{ secrets.KANDJI_SUBDOMAIN }}
+          JSON_LOG_FILE:    /tmp/drift_check.jsonl
         run: python remediation/drift_check.py
+
+      # -----------------------------------------------------------------------
+      # SIEM log shipping — uncomment ONE of the blocks below.
+      #
+      # All blocks use `if: always()` so logs are shipped even when the drift
+      # check exits with code 1 (e.g. API timeout, unhandled exception).
+      # Partial logs from a failed run are still useful audit evidence.
+      #
+      # Each block ships /tmp/drift_check.jsonl — the structured JSON output
+      # from the drift check. Each line is a self-contained JSON event record.
+      # -----------------------------------------------------------------------
+
+      # -----------------------------------------------------------------------
+      # Option A: Splunk HEC (HTTP Event Collector)
+      #
+      # Secrets required:
+      #   SPLUNK_HEC_URL    Full HEC endpoint, e.g.:
+      #                     https://splunk.company.com:8088/services/collector/event
+      #   SPLUNK_HEC_TOKEN  HEC token (from Splunk Settings → Data Inputs → HTTP Event Collector)
+      #
+      # The script wraps each JSON line in a Splunk event envelope and ships
+      # them in a single batch POST. Splunk HEC accepts up to 1MB per request --
+      # at ~500 bytes per event this handles ~2000 events per run comfortably.
+      #
+      # Splunk index and sourcetype are set via the HEC token configuration in
+      # Splunk. Recommended: index=security, sourcetype=fleet_drift_check
+      # -----------------------------------------------------------------------
+      # - name: Ship logs to Splunk
+      #   if: always()
+      #   env:
+      #     SPLUNK_HEC_URL:   ${{ secrets.SPLUNK_HEC_URL }}
+      #     SPLUNK_HEC_TOKEN: ${{ secrets.SPLUNK_HEC_TOKEN }}
+      #   run: |
+      #     if [ ! -f /tmp/drift_check.jsonl ]; then
+      #       echo "No log file found -- drift check may have failed before writing logs"
+      #       exit 0
+      #     fi
+      #
+      #     # Wrap each JSON line in a Splunk HEC event envelope and concatenate
+      #     BATCH=$(while IFS= read -r line; do
+      #       echo "{\"event\":$line,\"sourcetype\":\"fleet_drift_check\"}"
+      #     done < /tmp/drift_check.jsonl)
+      #
+      #     curl --fail-with-body -s \
+      #       -H "Authorization: Splunk $SPLUNK_HEC_TOKEN" \
+      #       -H "Content-Type: application/json" \
+      #       "$SPLUNK_HEC_URL" \
+      #       --data-binary "$BATCH"
+
+      # -----------------------------------------------------------------------
+      # Option B: Datadog Log Intake API
+      #
+      # Secrets required:
+      #   DATADOG_API_KEY   Datadog API key (Organization Settings → API Keys)
+      #
+      # Ships logs to the Datadog US1 intake endpoint. If your Datadog org is
+      # on a different site, update the URL:
+      #   US1:    https://http-intake.logs.datadoghq.com/api/v2/logs
+      #   US3:    https://http-intake.logs.us3.datadoghq.com/api/v2/logs
+      #   EU1:    https://http-intake.logs.datadoghq.eu/api/v2/logs
+      #   AP1:    https://http-intake.logs.ap1.datadoghq.com/api/v2/logs
+      #
+      # Logs appear in Datadog under source:fleet_drift_check.
+      # Build monitors on event:policy_failure or event:blankpush_failed.
+      # -----------------------------------------------------------------------
+      # - name: Ship logs to Datadog
+      #   if: always()
+      #   env:
+      #     DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
+      #   run: |
+      #     if [ ! -f /tmp/drift_check.jsonl ]; then
+      #       echo "No log file found -- drift check may have failed before writing logs"
+      #       exit 0
+      #     fi
+      #
+      #     # Datadog accepts a JSON array of log objects directly
+      #     PAYLOAD=$(jq -sc '
+      #       map({
+      #         ddsource: "fleet_drift_check",
+      #         ddtags:   "env:production,service:drift-check",
+      #         message:  (. | tostring)
+      #       })
+      #     ' /tmp/drift_check.jsonl)
+      #
+      #     curl --fail-with-body -s \
+      #       -H "DD-API-KEY: $DATADOG_API_KEY" \
+      #       -H "Content-Type: application/json" \
+      #       "https://http-intake.logs.datadoghq.com/api/v2/logs" \
+      #       --data-binary "$PAYLOAD"
+
+      # -----------------------------------------------------------------------
+      # Option C: Elastic (Elasticsearch Bulk API)
+      #
+      # Secrets required:
+      #   ELASTIC_ENDPOINT  Full Elasticsearch endpoint, e.g.:
+      #                     https://my-cluster.es.us-east-1.aws.elastic-cloud.com
+      #   ELASTIC_API_KEY   Base64-encoded API key (Kibana → Stack Management →
+      #                     API Keys → Create API key)
+      #
+      # Ships logs using the Bulk API to the fleet-drift-check-YYYY.MM.DD index.
+      # Daily indices make retention management straightforward -- configure an
+      # ILM policy in Kibana to roll over and delete after your required period.
+      #
+      # Each event is indexed as a document. Query in Kibana:
+      #   event: "policy_failure" AND policy: "CrowdStrike running"
+      # -----------------------------------------------------------------------
+      # - name: Ship logs to Elastic
+      #   if: always()
+      #   env:
+      #     ELASTIC_ENDPOINT: ${{ secrets.ELASTIC_ENDPOINT }}
+      #     ELASTIC_API_KEY:  ${{ secrets.ELASTIC_API_KEY }}
+      #   run: |
+      #     if [ ! -f /tmp/drift_check.jsonl ]; then
+      #       echo "No log file found -- drift check may have failed before writing logs"
+      #       exit 0
+      #     fi
+      #
+      #     INDEX="fleet-drift-check-$(date -u +%Y.%m.%d)"
+      #
+      #     # Build Elastic bulk request: action line + document line per event
+      #     BULK=$(while IFS= read -r line; do
+      #       echo "{\"index\":{\"_index\":\"$INDEX\"}}"
+      #       echo "$line"
+      #     done < /tmp/drift_check.jsonl)
+      #
+      #     curl --fail-with-body -s \
+      #       -H "Authorization: ApiKey $ELASTIC_API_KEY" \
+      #       -H "Content-Type: application/x-ndjson" \
+      #       "$ELASTIC_ENDPOINT/_bulk" \
+      #       --data-binary "$BULK"
+
+      # -----------------------------------------------------------------------
+      # Option D: Google SecOps (formerly Chronicle) UDM Ingestion API
+      #
+      # Secrets required:
+      #   GOOGLE_SECOPS_API_KEY       Google API key with Chronicle API access
+      #   GOOGLE_SECOPS_CUSTOMER_ID   Chronicle customer ID (UUID format)
+      #
+      # Ships logs as GENERIC_EVENT UDM records to the Chronicle ingestion API.
+      # Each JSON event line is base64-encoded and wrapped in the Chronicle
+      # unstructured log entry format. Chronicle will parse and normalise them
+      # into UDM events automatically using a custom parser if configured.
+      #
+      # For FedRAMP environments use the FedRAMP Chronicle endpoint:
+      #   https://malachiteingestion-pa.googleapis.com  (commercial)
+      #   Confirm FedRAMP-specific endpoint with your Google SecOps TAM.
+      # -----------------------------------------------------------------------
+      # - name: Ship logs to Google SecOps
+      #   if: always()
+      #   env:
+      #     GOOGLE_SECOPS_API_KEY:     ${{ secrets.GOOGLE_SECOPS_API_KEY }}
+      #     GOOGLE_SECOPS_CUSTOMER_ID: ${{ secrets.GOOGLE_SECOPS_CUSTOMER_ID }}
+      #   run: |
+      #     if [ ! -f /tmp/drift_check.jsonl ]; then
+      #       echo "No log file found -- drift check may have failed before writing logs"
+      #       exit 0
+      #     fi
+      #
+      #     # Build Chronicle unstructured log entries -- each line base64 encoded
+      #     ENTRIES=$(while IFS= read -r line; do
+      #       ENCODED=$(echo "$line" | base64 -w 0)
+      #       echo "{\"logText\":\"$ENCODED\"}"
+      #     done < /tmp/drift_check.jsonl | paste -sd,)
+      #
+      #     curl --fail-with-body -s \
+      #       -H "x-goog-api-key: $GOOGLE_SECOPS_API_KEY" \
+      #       -H "Content-Type: application/json" \
+      #       "https://malachiteingestion-pa.googleapis.com/v2/unstructuredlogentries:batchCreate?customer_id=$GOOGLE_SECOPS_CUSTOMER_ID&log_type=FLEET_DRIFT_CHECK" \
+      #       --data-binary "{\"entries\":[$ENTRIES]}"
+
+      # -----------------------------------------------------------------------
+      # Option E: Sumo Logic (HTTP Source)
+      #
+      # Secrets required:
+      #   SUMO_HTTP_SOURCE_URL  HTTP Source URL generated when you create an
+      #                         HTTP Source in Sumo Logic:
+      #                         Manage Data → Collection → Add Source →
+      #                         HTTP Logs & Metrics → copy the generated URL
+      #
+      # Sumo Logic's HTTP Source is the simplest ingest API of any SIEM here --
+      # JSON Lines can be POSTed directly with no wrapping or transformation.
+      # Each line is ingested as a separate log message automatically.
+      #
+      # The X-Sumo-Category header sets the Source Category, which is used for
+      # partitioning and searching in Sumo Logic. Recommended value:
+      #   fleet/drift-check
+      #
+      # Sumo Logic retains logs per your account's retention settings. Configure
+      # a Data Tier and retention period in Sumo Logic to meet AU-11 / PCI Req
+      # 10.5 requirements (FedRAMP High: 3 years, PCI: 12 months minimum).
+      # -----------------------------------------------------------------------
+      # - name: Ship logs to Sumo Logic
+      #   if: always()
+      #   env:
+      #     SUMO_HTTP_SOURCE_URL: ${{ secrets.SUMO_HTTP_SOURCE_URL }}
+      #   run: |
+      #     if [ ! -f /tmp/drift_check.jsonl ]; then
+      #       echo "No log file found -- drift check may have failed before writing logs"
+      #       exit 0
+      #     fi
+      #
+      #     # Sumo Logic HTTP Source accepts JSON Lines directly -- no transformation needed
+      #     curl --fail-with-body -s \
+      #       -H "X-Sumo-Category: fleet/drift-check" \
+      #       -H "X-Sumo-Name: drift_check" \
+      #       -H "Content-Type: application/x-www-form-urlencoded" \
+      #       "$SUMO_HTTP_SOURCE_URL" \
+      #       --data-binary @/tmp/drift_check.jsonl
+
+      # -----------------------------------------------------------------------
+      # Option F: AWS CloudWatch Logs
+      #
+      # Secrets required:
+      #   AWS_ROLE_ARN  IAM role ARN to assume via OIDC (same role used for
+      #                 Terraform if you have one configured). The role needs:
+      #                   logs:CreateLogGroup
+      #                   logs:CreateLogDelivery
+      #                   logs:CreateLogStream
+      #                   logs:PutLogEvents
+      #
+      # Permissions:
+      #   id-token: write   must be set at job level (already set above)
+      #
+      # Ships logs to CloudWatch Logs under:
+      #   Log group:  /fleet/drift-check
+      #   Log stream: YYYY-MM-DD (daily, one stream per day)
+      #
+      # CloudWatch Logs retention is configured on the log group -- set it to
+      # 365 days (PCI minimum) or 1096 days (3 years, FedRAMP High AU-11).
+      # CloudWatch log groups can also be exported to S3 for long-term archival
+      # at lower cost via a CloudWatch Logs export task or Data Firehose.
+      #
+      # If you already use AWS Security Hub, CloudWatch Logs integrates natively
+      # -- no additional configuration needed to surface events in Security Hub.
+      # -----------------------------------------------------------------------
+      # - name: Configure AWS credentials
+      #   if: always()
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+      #     aws-region:     us-east-1
+      #
+      # - name: Ship logs to AWS CloudWatch
+      #   if: always()
+      #   run: |
+      #     if [ ! -f /tmp/drift_check.jsonl ]; then
+      #       echo "No log file found -- drift check may have failed before writing logs"
+      #       exit 0
+      #     fi
+      #
+      #     LOG_GROUP="/fleet/drift-check"
+      #     LOG_STREAM=$(date -u +%Y-%m-%d)
+      #
+      #     # Create log group and stream if they don't exist (idempotent)
+      #     aws logs create-log-group --log-group-name "$LOG_GROUP" 2>/dev/null || true
+      #     aws logs create-log-stream \
+      #       --log-group-name "$LOG_GROUP" \
+      #       --log-stream-name "$LOG_STREAM" 2>/dev/null || true
+      #
+      #     # Convert JSON Lines to CloudWatch event format:
+      #     # [{"timestamp": epoch_ms, "message": "json string"}, ...]
+      #     EVENTS=$(while IFS= read -r line; do
+      #       TS=$(echo "$line" | python3 -c "
+      #     import sys, json, datetime
+      #     d = json.load(sys.stdin)
+      #     ts = datetime.datetime.fromisoformat(d['timestamp'].replace('Z','+00:00'))
+      #     print(int(ts.timestamp() * 1000))
+      #       ")
+      #       printf '{"timestamp":%s,"message":%s}\n' "$TS" "$(echo "$line" | jq -c .)"
+      #     done < /tmp/drift_check.jsonl | jq -sc .)
+      #
+      #     aws logs put-log-events \
+      #       --log-group-name  "$LOG_GROUP" \
+      #       --log-stream-name "$LOG_STREAM" \
+      #       --log-events      "$EVENTS"

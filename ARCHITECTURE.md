@@ -2,10 +2,7 @@
 
 ## Overview
 
-This system provides automated endpoint compliance monitoring and remediation
-by connecting FleetDM policy failures to Kandji MDM enforcement. One active
-script runs on a continuous schedule and serves as the primary compliance
-automation layer.
+This system provides automated endpoint compliance monitoring and remediation by connecting FleetDM policy failures to Kandji MDM enforcement. One active script runs on a continuous schedule and serves as the primary compliance automation layer.
 
 | Component | File | Trigger | Purpose |
 |---|---|---|---|
@@ -27,7 +24,7 @@ See `archive/README.md` for context on when to deploy the webhook handler.
                              │
               ┌──────────────┴──────────────┐
               │                             │
-┌─────────────▼──────────────┐  ┌──────────▼──────────────────────┐
+┌─────────────▼──────────-────┐  ┌──────────▼──────────────────────┐
 │         FleetDM             │  │          EDR (CrowdStrike        │
 │   (compliance / visibility) │  │          / Cisco / SentinelOne)  │
 │                             │  │                                  │
@@ -169,18 +166,14 @@ JSON_LOG_FILE=/var/log/drift_check_json.log python drift_check.py
 
 **Why two streams:**
 
-Kandji logs what it *did* — profile delivery, check-ins, blankpush receipt.
-Our JSON logs record the compliance *outcome* — independent verification that
-controls are actually in effect. A SIEM with both can answer: "was the control
-enforced AND was it effective?" That correlation satisfies CA-7 (FedRAMP),
-CC7.2 (SOC 2), and A.8.16 (ISO 27001).
+Kandji logs what it *did* — profile delivery, check-ins, blankpush receipt. Our JSON logs record the compliance *outcome* — independent verification that controls are actually in effect. A SIEM with both can answer: "was the control
+enforced AND was it effective?" That correlation satisfies CA-7 (FedRAMP), CC7.2 (SOC 2), and A.8.16 (ISO 27001).
 
 ---
 
 ## Environment Variables
 
-Store in a secrets manager (AWS Secrets Manager, GCP Secret Manager, HashiCorp
-Vault) and inject at runtime — never commit to source control.
+Store in a secrets manager (AWS Secrets Manager, GCP Secret Manager, HashiCorp Vault) and inject at runtime — never commit to source control.
 
 | Variable | Description |
 |---|---|
@@ -295,16 +288,17 @@ jobs:
 | 200 failing devices | ~203 | ~2-3 minutes |
 | All 600 devices failing | ~603 | ~6-7 minutes |
 
-Kandji rate limit: 300 requests/minute. Per-service timeouts: Fleet (5, 10)s,
-Kandji (5, 15)s, Slack (5, 10)s. GitHub Actions job timeout: 6 hours (not
-a practical concern at these volumes).
+Kandji rate limit: 300 requests/minute. 
+Per-service timeouts: 
+Fleet (5, 10)s 
+Kandji (5, 15)s Slack (5, 10)s 
+GitHub Actions job timeout: 6 hours (not a practical concern at these volumes).
 
 ---
 
 ## NIST 800-53 Control Mapping
 
-The drift check itself contributes to several controls beyond those covered
-by individual policies:
+The drift check itself contributes to several controls beyond those covered by individual policies:
 
 | Control | Description | How satisfied |
 |---|---|---|
@@ -320,22 +314,12 @@ See `FEDRAMP-MATRIX.md` for the full control mapping across all 32 policies.
 
 ## Known Limitations
 
-**Blankpush latency** — a blankpush wakes the device via APNs but the device
-still needs to check in and apply its blueprint. On a healthy network this is
-seconds to a few minutes. Devices that are powered off, lid-closed for extended
-periods, or on restricted networks will not respond until they reconnect.
+**Blankpush latency** — a blankpush wakes the device via APNs but the device still needs to check in and apply its blueprint. On a healthy network this is seconds to a few minutes. Devices that are powered off, lid-closed for extended periods, or on restricted networks will not respond until they reconnect.
 
-**Kandji device cache** — built once at startup. Devices enrolled in Kandji
-after the run starts will not be found until the next run.
+**Kandji device cache** — built once at startup. Devices enrolled in Kandji after the run starts will not be found until the next run.
 
-**Global policies only** — `drift_check.py` queries global Fleet policies.
-If policies are scoped to Fleet teams, `get_all_policies()` would need to
-iterate team IDs and call the team policies endpoint for each.
+**Global policies only** — `drift_check.py` queries global Fleet policies. If policies are scoped to Fleet teams, `get_all_policies()` would need to iterate team IDs and call the team policies endpoint for each.
 
-**Agent verification, not outcome** — backup and EDR policies verify the agent
-process is running, not that it is operating correctly. A running agent can
-still fail silently. Verify outcomes in the respective management consoles.
+**Agent verification, not outcome** — backup and EDR policies verify the agent process is running, not that it is operating correctly. A running agent can still fail silently. Verify outcomes in the respective management consoles.
 
-**SIP failures require manual intervention** — SIP cannot be re-enabled via
-MDM. A device failing `sip-enabled.yml` requires physical access to Recovery
-Mode. Treat as a potential security incident.
+**SIP failures require manual intervention** — SIP cannot be re-enabled via MDM. A device failing `sip-enabled.yml` requires physical access to Recovery Mode. Treat as a potential security incident.

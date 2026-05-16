@@ -24,7 +24,7 @@ See `archive/README.md` for context on when to deploy the webhook handler.
                              │
               ┌──────────────┴──────────────┐
               │                             │
-┌─────────────▼──────────-────┐  ┌──────────▼──────────────────────┐
+┌─────────────▼──────────-────┐  ┌──────────▼─────────-─────────────┐
 │         FleetDM             │  │          EDR (CrowdStrike        │
 │   (compliance / visibility) │  │          / Cisco / SentinelOne)  │
 │                             │  │                                  │

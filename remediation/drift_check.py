@@ -48,9 +48,11 @@ Usage
 import json
 import logging
 import os
+import re
 import sys
 from datetime import datetime, timezone
 from typing import Any
+from urllib.parse import urlparse
 
 import requests
 import yaml
@@ -59,14 +61,53 @@ import yaml
 # Config
 # ---------------------------------------------------------------------------
 
-FLEET_URL: str      = os.environ["FLEET_URL"].rstrip("/")
-FLEET_API_TOKEN: str = os.environ["FLEET_API_TOKEN"]
-SLACK_BOT_TOKEN: str = os.environ["SLACK_BOT_TOKEN"]
+_REQUIRED_ENV_VARS = [
+    "FLEET_URL",
+    "FLEET_API_TOKEN",
+    "SLACK_BOT_TOKEN",
+    "SLACK_CHANNEL_ID",
+    "KANDJI_API_TOKEN",
+    "KANDJI_SUBDOMAIN",
+]
+
+_missing = [v for v in _REQUIRED_ENV_VARS if not os.environ.get(v)]
+if _missing:
+    print("drift_check: missing required environment variable(s):", file=sys.stderr)
+    for _var in _missing:
+        print(f"  {_var}", file=sys.stderr)
+    print("\nSee the module docstring for the full list of required variables.", file=sys.stderr)
+    sys.exit(1)
+
+# Validate FLEET_URL: must be https with a non-empty hostname.
+# Rejects http://, file://, or anything that could redirect requests to
+# an unintended internal target (SSRF via misconfigured env).
+_fleet_url_raw = os.environ["FLEET_URL"].rstrip("/")
+_fleet_parsed  = urlparse(_fleet_url_raw)
+if _fleet_parsed.scheme != "https" or not _fleet_parsed.hostname:
+    print(
+        f"drift_check: FLEET_URL must be an https URL (got {_fleet_url_raw!r})",
+        file=sys.stderr,
+    )
+    sys.exit(1)
+FLEET_URL: str = _fleet_url_raw
+
+# Validate KANDJI_SUBDOMAIN: alphanumeric and hyphens only.
+# Prevents URL injection — a subdomain containing '@' or '/' could redirect
+# the constructed base URL to an attacker-controlled host.
+_kandji_subdomain = os.environ["KANDJI_SUBDOMAIN"]
+if not re.fullmatch(r"[a-zA-Z0-9-]+", _kandji_subdomain):
+    print(
+        f"drift_check: KANDJI_SUBDOMAIN must contain only letters, digits, and hyphens "
+        f"(got {_kandji_subdomain!r})",
+        file=sys.stderr,
+    )
+    sys.exit(1)
+
+FLEET_API_TOKEN: str  = os.environ["FLEET_API_TOKEN"]
+SLACK_BOT_TOKEN: str  = os.environ["SLACK_BOT_TOKEN"]
 SLACK_CHANNEL_ID: str = os.environ["SLACK_CHANNEL_ID"]
 KANDJI_API_TOKEN: str = os.environ["KANDJI_API_TOKEN"]
-KANDJI_BASE_URL: str  = (
-    f"https://{os.environ['KANDJI_SUBDOMAIN']}.api.kandji.io/api/v1"
-)
+KANDJI_BASE_URL: str  = f"https://{_kandji_subdomain}.api.kandji.io/api/v1"
 
 # Path to the policy config file. Override with DRIFT_POLICY_CONFIG env var.
 POLICY_CONFIG_PATH: str = os.environ.get("DRIFT_POLICY_CONFIG", "policies.yml")

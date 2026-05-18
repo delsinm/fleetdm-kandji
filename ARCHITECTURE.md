@@ -187,7 +187,7 @@ Store in a secrets manager (AWS Secrets Manager, GCP Secret Manager, HashiCorp V
 ## Repository Structure
 
 ```
-it-infrastructure/
+fleetdm-compliance/
 │
 ├── README.md                        ← operational overview
 ├── ARCHITECTURE.md                  ← this file
